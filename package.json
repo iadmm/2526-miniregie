@@ -18,11 +18,15 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check": "biome check .",
-    "format": "biome format --write ."
+    "format": "biome format --write .",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
     "cookie": "^1.1.1",
+    "drizzle-orm": "^0.45.1",
     "express": "^4.21.0",
     "multer": "^2.1.1",
     "socket.io": "^4.8.3",
@@ -38,6 +42,7 @@
     "@types/multer": "^2.1.0",
     "@types/node": "^25.4.0",
     "concurrently": "^9.2.1",
+    "drizzle-kit": "^0.31.9",
     "esbuild": "^0.27.3",
     "lightningcss": "^1.32.0",
     "svelte": "^5.53.10",

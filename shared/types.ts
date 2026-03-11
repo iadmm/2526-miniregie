@@ -82,7 +82,6 @@ export interface Participant {
   lastSeenAt: number;
   banned: boolean;
   bannedAt: number | null;
-  bannedBy: string | null;
   banReason: string | null;
 }
 
