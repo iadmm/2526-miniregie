@@ -1,0 +1,30 @@
+node_modules
+dist
+build
+.svelte-kit
+
+# Runtime — pas du code source
+state.json
+*.db
+*.db-shm
+*.db-wal
+uploads/
+
+# Env
+.env
+.env.local
+
+# OS
+.DS_Store
+
+# Playwright
+test-results/
+playwright-report/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Vite cache
+.vite/
+.idea/

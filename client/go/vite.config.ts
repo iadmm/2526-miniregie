@@ -1,0 +1,38 @@
+import { defineConfig } from 'vite';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { VitePWA } from 'vite-plugin-pwa';
+import { resolve } from 'node:path';
+
+export default defineConfig({
+  plugins: [
+    svelte(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      manifest: {
+        name: 'JAM Multimédia — Régie',
+        short_name: 'Régie',
+        description: 'Partage tes créations avec la régie',
+        theme_color: '#1ac0d7',
+        background_color: '#0a0a0a',
+        display: 'standalone',
+        start_url: '/go',
+        share_target: {
+          action: '/go/link',
+          method: 'GET',
+          params: { url: 'url' },
+        },
+      },
+    }),
+  ],
+  resolve: {
+    alias: { '@shared': resolve(import.meta.dirname, '../../shared') },
+  },
+  server: {
+    port: 3002,
+    proxy: {
+      '/api': 'http://localhost:3000',
+      '/auth': 'http://localhost:3000',
+    },
+  },
+  build: { outDir: 'dist' },
+});

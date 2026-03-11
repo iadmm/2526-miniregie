@@ -1,0 +1,57 @@
+/* MiniRégie TV — broadcast SPA */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  font-family: system-ui, sans-serif;
+  background: #0a0a0a;
+  color: #fff;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ─── Couches racines ─────────────────────────────────────────────────────── */
+
+#app-layer,
+#persistent-layer,
+#panic-layer {
+  position: fixed;
+  inset: 0;
+}
+
+#app-layer {
+  z-index: 1;
+}
+
+#persistent-layer {
+  z-index: 2;
+  pointer-events: none;
+}
+
+#panic-layer {
+  z-index: 100;
+  display: none;
+  background: #0a0a0a;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Slots ───────────────────────────────────────────────────────────────── */
+
+#slot-fg,
+#slot-bg {
+  position: absolute;
+  inset: 0;
+}
+
+#slot-bg {
+  visibility: hidden;
+}

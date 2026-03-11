@@ -1,0 +1,50 @@
+{
+  "name": "miniregie-tv",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently --kill-others -n server,broadcast,admin,go -c cyan,blue,green,yellow \"npm run dev:server\" \"npm run dev:broadcast\" \"npm run dev:admin\" \"npm run dev:go\"",
+    "dev:server": "node --watch --experimental-strip-types server/src/index.ts",
+    "dev:broadcast": "concurrently \"node client/broadcast/scripts/build.js --watch\" \"node client/broadcast/scripts/css.js --watch\"",
+    "dev:admin": "vite dev client/admin --port 3001",
+    "dev:go": "vite dev client/go --port 3002",
+    "build": "npm run build:server && npm run build:broadcast && npm run build:admin && npm run build:go",
+    "build:server": "esbuild server/src/index.ts --bundle=false --format=esm --outdir=server/dist --platform=node",
+    "build:broadcast": "node client/broadcast/scripts/build.js && node client/broadcast/scripts/css.js",
+    "build:admin": "vite build client/admin",
+    "build:go": "vite build client/go",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check": "biome check .",
+    "format": "biome format --write ."
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.2",
+    "cookie": "^1.1.1",
+    "express": "^4.21.0",
+    "multer": "^2.1.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.6",
+    "@playwright/test": "^1.58.2",
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/cookie": "^1.0.0",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^25.4.0",
+    "concurrently": "^9.2.1",
+    "esbuild": "^0.27.3",
+    "lightningcss": "^1.32.0",
+    "svelte": "^5.53.10",
+    "svelte-check": "^4.4.5",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^4.0.18"
+  }
+}
