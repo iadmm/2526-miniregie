@@ -1,0 +1,37 @@
+[
+  {
+    "_note": "JAM_START is a manual admin action — not in schedule. It triggers countdown-to-jam automatically.",
+    "at": "H+00:10:00",
+    "app": "jam-mode"
+  },
+  {
+    "_note": "micro-trottoir session at H+12h",
+    "at": "H+12:00:00",
+    "app": "micro-trottoir"
+  },
+  {
+    "_note": "micro-trottoir session at H+30h",
+    "at": "H+30:00:00",
+    "app": "micro-trottoir"
+  },
+  {
+    "_note": "micro-trottoir session 4h before end",
+    "at": "T-04:00:00",
+    "app": "micro-trottoir"
+  },
+  {
+    "_note": "return to jam-mode 1h before end",
+    "at": "T-01:00:00",
+    "app": "jam-mode"
+  },
+  {
+    "_note": "end-of-countdown — UPDATE THIS to the actual JAM end datetime (ISO 8601)",
+    "at": "2026-03-22T16:00:00+01:00",
+    "app": "end-of-countdown"
+  },
+  {
+    "_note": "post-jam-idle — UPDATE THIS to actual JAM end datetime + 5 minutes",
+    "at": "2026-03-22T16:05:00+01:00",
+    "app": "post-jam-idle"
+  }
+]
