@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { writeFile } from 'node:fs/promises';
+import { readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs';
+import { writeFile, rename } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import type { Server, Socket } from 'socket.io';
 import { shouldFire, parseScheduleEntry } from './triggers.js';
@@ -269,9 +269,11 @@ export class BroadcastManager {
       activeApp: this.state.broadcast.activeApp,
       schedule:  this.schedule,
     };
-    // Fire-and-forget async write — sync fallback on destroy
-    writeFile(STATE_FILE, JSON.stringify(data, null, 2)).catch(() => {
-      try { writeFileSync(STATE_FILE, JSON.stringify(data, null, 2)); } catch { /* best effort */ }
+    const json = JSON.stringify(data, null, 2);
+    const tmp  = `${STATE_FILE}.tmp`;
+    // Atomic write: write to .tmp then rename — prevents empty/corrupt state.json on crash
+    writeFile(tmp, json).then(() => rename(tmp, STATE_FILE)).catch(() => {
+      try { writeFileSync(tmp, json); renameSync(tmp, STATE_FILE); } catch { /* best effort */ }
     });
   }
 
