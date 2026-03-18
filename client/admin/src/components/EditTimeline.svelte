@@ -1,8 +1,57 @@
 <script lang="ts">
   import { socketState } from '../lib/socket.svelte.ts';
+  import { scheduleState, refreshSchedule } from '../lib/schedule.svelte.ts';
+  import { APP_COLORS } from '../lib/app-utils.ts';
 
   const jam      = $derived(socketState.globalState?.jam);
   const snapshot = $derived(socketState.globalState?.pool.queueSnapshot ?? []);
+
+  // ─── NOW marker ───────────────────────────────────────────────────────────
+  let nowPx = $state(0);
+
+  $effect(() => {
+    function updateNow() {
+      if (!jam?.startedAt) { nowPx = 0; return; }
+      nowPx = ((Date.now() - jam.startedAt) / (48 * 3600 * 1000)) * 4800;
+    }
+    updateNow();
+    const t = setInterval(updateNow, 1000);
+    return () => clearInterval(t);
+  });
+
+  // ─── Schedule ─────────────────────────────────────────────────────────────
+  $effect(() => {
+    refreshSchedule();
+  });
+
+  $effect(() => {
+    if (jam?.status !== 'running') return;
+    const t = setInterval(refreshSchedule, 5000);
+    return () => clearInterval(t);
+  });
+
+  function parseHHMMSS(s: string): number {
+    const parts = s.split(':').map(Number);
+    const h   = parts[0] ?? 0;
+    const m   = parts[1] ?? 0;
+    const sec = parts[2] ?? 0;
+    return ((h * 3600) + (m * 60) + sec) * 1000;
+  }
+
+  function resolveOffsetPx(at: string, startedAt: number | null, endsAt: number | null): number | null {
+    const PX_PER_MS = 4800 / (48 * 3600 * 1000);
+    if (at.startsWith('H+')) {
+      if (!startedAt) return null;
+      return parseHHMMSS(at.slice(2)) * PX_PER_MS;
+    }
+    if (at.startsWith('T-')) {
+      if (!endsAt || !startedAt) return null;
+      return (endsAt - parseHHMMSS(at.slice(2)) - startedAt) * PX_PER_MS;
+    }
+    // ISO absolute
+    const anchor = startedAt ?? Date.now();
+    return (Date.parse(at) - anchor) * PX_PER_MS;
+  }
 
   function typeColor(type: string): string {
     const map: Record<string, string> = {
@@ -68,15 +117,39 @@
     <!-- Track: schedule triggers -->
     <div class="track">
       <div class="track-label">Schedule</div>
-      <div class="track-content">
-        <div class="placeholder-track">
-          <span>Triggers du schedule — à positionner sur la règle temporelle</span>
-        </div>
+      <div class="track-content schedule-content">
+        {#if scheduleState.entries.length === 0}
+          <div class="placeholder-track"><span>Aucune entrée schedule</span></div>
+        {:else}
+          {#each scheduleState.entries as entry (entry.id)}
+            {@const px = resolveOffsetPx(entry.at, jam?.startedAt ?? null, jam?.endsAt ?? null)}
+            {#if px !== null}
+              <div
+                class="schedule-marker"
+                class:fired={entry.status === 'fired'}
+                class:skipped={entry.status === 'skipped'}
+                style="left: {px}px; --color: {APP_COLORS[entry.app] ?? '#888'}"
+                title="{entry.app}{entry.label ? ': ' + entry.label : ''} [{entry.at}]"
+              >
+                <div class="marker-pin"></div>
+                <div class="marker-pill">{entry.label ?? entry.app}</div>
+              </div>
+            {:else}
+              <div
+                class="schedule-marker unresolved"
+                style="--color: {APP_COLORS[entry.app] ?? '#888'}"
+                title="{entry.app} — position indéterminée (JAM pas démarré)"
+              >
+                <div class="marker-pill">{entry.label ?? entry.app}</div>
+              </div>
+            {/if}
+          {/each}
+        {/if}
       </div>
     </div>
 
     <!-- NOW marker -->
-    <div class="now-marker" style="left:0%">
+    <div class="now-marker" style="left:{nowPx}px">
       <div class="now-line"></div>
       <span class="now-label">NOW</span>
     </div>
@@ -224,6 +297,75 @@
     max-width: 60px;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  /* Schedule track */
+  .schedule-content {
+    overflow: visible;
+  }
+
+  .schedule-marker {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    transform: translateX(-50%);
+    pointer-events: auto;
+    cursor: default;
+  }
+
+  .schedule-marker.unresolved {
+    position: relative;
+    opacity: 0.4;
+    transform: none;
+    left: auto !important;
+    flex-direction: row;
+    gap: 0;
+  }
+
+  .marker-pin {
+    width: 1.5px;
+    flex: 1;
+    background: var(--color, #888);
+    min-height: 4px;
+  }
+
+  .marker-pill {
+    font-size: 7px;
+    padding: 1px 3px;
+    border-radius: 2px;
+    white-space: nowrap;
+    max-width: 64px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+  }
+
+  /* pending: dashed outline */
+  .schedule-marker:not(.fired):not(.skipped) .marker-pill {
+    border: 1.5px dashed var(--color, #888);
+    color: var(--color, #888);
+    background: transparent;
+  }
+
+  /* fired: solid */
+  .schedule-marker.fired .marker-pin { background: var(--color, #888); }
+  .schedule-marker.fired .marker-pill {
+    background: var(--color, #888);
+    color: #fff;
+  }
+
+  /* skipped */
+  .schedule-marker.skipped {
+    opacity: 0.4;
+  }
+  .schedule-marker.skipped .marker-pill {
+    background: var(--color, #888);
+    color: #fff;
+    text-decoration: line-through;
   }
 
   /* NOW marker */

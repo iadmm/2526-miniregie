@@ -165,7 +165,7 @@ setTimeout(() => {
     persistentLayerReady = true;
     const emptyState: GlobalState = {
       jam: { status: 'idle', startedAt: null, endsAt: null, timeRemaining: null },
-      broadcast: { activeApp: 'pre-jam-idle', transition: 'idle', panicState: false },
+      broadcast: { activeApp: 'pre-jam-idle', transition: 'idle', panicState: false, nextTriggerAt: null },
       pool: { total: 0, fresh: 0, queueSnapshot: [] },
     };
     initPersistentLayer(persistentLayer, socket, emptyState, GO_URL);

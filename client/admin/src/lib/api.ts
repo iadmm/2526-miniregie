@@ -1,4 +1,4 @@
-import type { MediaStatus, AppId, Participant, MediaItem, GlobalState, LimitTrigger, JamConfig } from '@shared/types';
+import type { MediaStatus, AppId, Participant, MediaItem, GlobalState, LimitTrigger, JamConfig, ScheduleEntry } from '@shared/types';
 
 // ─── Error type ───────────────────────────────────────────────────────────────
 
@@ -129,6 +129,28 @@ export const api = {
 
     schedule(): Promise<LimitTrigger[]> {
       return request('/api/broadcast/schedule');
+    },
+  },
+
+  schedule: {
+    list(): Promise<ScheduleEntry[]> {
+      return request('/api/schedule');
+    },
+
+    create(payload: { at: string; app: string; label?: string }): Promise<ScheduleEntry> {
+      return request('/api/schedule', { method: 'POST', body: JSON.stringify(payload) });
+    },
+
+    update(id: number, patch: { at?: string; app?: string; label?: string | null; status?: string }): Promise<{ ok: boolean }> {
+      return request(`/api/schedule/${id}`, { method: 'PUT', body: JSON.stringify(patch) });
+    },
+
+    delete(id: number): Promise<{ ok: boolean }> {
+      return request(`/api/schedule/${id}`, { method: 'DELETE' });
+    },
+
+    reload(): Promise<{ ok: boolean }> {
+      return request('/api/schedule/reload', { method: 'POST' });
     },
   },
 

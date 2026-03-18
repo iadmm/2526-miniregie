@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import type { MediaContent, MediaType, MediaStatus, MediaEventType, BroadcastEventType } from '../../../shared/types.js';
+import type { MediaContent, MediaType, MediaStatus, MediaEventType, BroadcastEventType, ScheduleEntryStatus } from '../../../shared/types.js';
 
 export const participants = sqliteTable('participants', {
   id:           text('id').primaryKey(),       // uuid | 'system:admin'
@@ -43,4 +43,16 @@ export const broadcastEvents = sqliteTable('broadcast_events', {
   type:      text('type').notNull().$type<BroadcastEventType>(),
   payload:   text('payload', { mode: 'json' }).$type<Record<string, unknown>>(),
   createdAt: integer('created_at').notNull(),
+});
+
+// Live-editable broadcast schedule — seeded from config/schedule.json, source of truth at runtime
+export const scheduleEntries = sqliteTable('schedule_entries', {
+  id:         integer('id').primaryKey({ autoIncrement: true }),
+  at:         text('at').notNull(),                                        // "H+00:10:00" | "T-04:00:00" | ISO 8601
+  app:        text('app').notNull(),
+  label:      text('label'),
+  status:     text('status').notNull().$type<ScheduleEntryStatus>().default('pending'),
+  firedAt:    integer('fired_at'),                                         // unix timestamp ms, null until fired
+  createdAt:  integer('created_at').notNull().$defaultFn(() => Date.now()),
+  modifiedAt: integer('modified_at').notNull().$defaultFn(() => Date.now()),
 });

@@ -4,12 +4,13 @@ import { computeScore } from './scoring.js';
 import { sanitize } from './sanitize.js';
 import { guard } from './guard.js';
 import {
-  insertItem, updateStatus, updatePriority, updatePinned, clearAllPinned,
+  insertItem, updateStatus, updateContent, updatePriority, updatePinned, clearAllPinned,
   getReadyItems, getLastSubmissionAt, getClipCount, insertEvent,
   type ReadyItemFilters, type ScoredRow,
 } from '../db/queries.js';
 import type { GlobalState, MediaItem, MediaType } from '../../../shared/types.js';
 import type { RawInput, ValidatedInput } from './types.js';
+import { resolve } from './resolve.js';
 import { getJamConfig } from '../jam-config.js';
 
 const SAME_AUTHOR_PENALTY = 30;
@@ -87,22 +88,22 @@ export class PoolManager extends EventEmitter {
     insertItem(item);
 
     // 5. Async pipeline — RESOLVE → ENRICH → ready
-    void this.runPipeline(item.id, sanitized.validated);
+    const filePath = 'filePath' in raw ? raw.filePath : undefined;
+    void this.runPipeline(item.id, sanitized.validated, filePath);
 
     return item;
   }
 
-  private async runPipeline(itemId: string, validated: ValidatedInput): Promise<void> {
+  private async runPipeline(itemId: string, validated: ValidatedInput, filePath?: string): Promise<void> {
     try {
-      // RESOLVE: save files, run ffprobe, fetch thumbnails, etc.
-      // Placeholder — will be implemented per type in routes/resolve.ts
-      const content = await this.resolve(itemId, validated);
+      // RESOLVE: move files, run ffprobe, fetch OG metadata, etc.
+      const content = await resolve({
+        type:     validated.type,
+        content:  validated as ValidatedInput['content'],
+        filePath,
+      });
 
-      // Update content in DB
-      // Note: Drizzle doesn't expose a direct content update — we use raw status update
-      // Content update query will be added to queries.ts when routes are implemented
-      void content; // TODO: updateContent(itemId, content)
-
+      updateContent(itemId, content);
       updateStatus(itemId, 'ready');
 
       insertEvent({
@@ -129,12 +130,6 @@ export class PoolManager extends EventEmitter {
   addDirectItem(item: MediaItem): void {
     insertItem(item);
     this.emit('update');
-  }
-
-  // Placeholder — actual resolution logic lives in routes/resolve.ts
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private async resolve(_itemId: string, _validated: unknown): Promise<MediaItem['content']> {
-    return {} as MediaItem['content'];
   }
 
   // ─── Stats (for GlobalState) ────────────────────────────────────────────────

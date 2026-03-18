@@ -4,8 +4,9 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { eq } from 'drizzle-orm';
 import { scrypt, randomBytes, randomUUID } from 'node:crypto';
 import { promisify } from 'node:util';
+import { readFileSync } from 'node:fs';
 import * as schema from './schema.js';
-import { participants } from './schema.js';
+import { participants, scheduleEntries } from './schema.js';
 
 const scryptAsync = promisify(scrypt);
 
@@ -59,4 +60,26 @@ if (adminUsername && adminPassword) {
   }
 } else {
   console.warn('[db] ADMIN_USERNAME or ADMIN_PASSWORD not set — admin account not seeded');
+}
+
+// ─── Seed schedule from config/schedule.json if table is empty ────────────────
+
+const existingEntries = db.select().from(scheduleEntries).all();
+if (existingEntries.length === 0) {
+  const SCHEDULE_FILE = process.env['SCHEDULE_FILE'] ?? 'config/schedule.json';
+  try {
+    const raw = JSON.parse(readFileSync(SCHEDULE_FILE, 'utf-8')) as Array<{ at: string; app?: string; trigger?: string; label?: string }>;
+    for (const entry of raw) {
+      const app = entry.app ?? entry.trigger;
+      if (!app) continue;
+      db.insert(scheduleEntries).values({
+        at:    entry.at,
+        app,
+        label: entry.label ?? null,
+      }).run();
+    }
+    console.log(`[db] Schedule seeded from ${SCHEDULE_FILE}: ${raw.length} entries`);
+  } catch (err) {
+    console.warn(`[db] Failed to seed schedule from ${SCHEDULE_FILE}:`, err);
+  }
 }

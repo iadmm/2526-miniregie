@@ -8,9 +8,10 @@ import './db/index.js';
 import { PoolManager } from "./pool";
 import { BroadcastManager } from "./broadcast";
 
-import authRouter        from './routes/auth.js';
-import createApiRouter   from './routes/api.js';
-import createGoRouter    from './routes/go.js';
+import authRouter            from './routes/auth.js';
+import createApiRouter       from './routes/api.js';
+import createGoRouter        from './routes/go.js';
+import createScheduleRouter  from './routes/schedule.js';
 
 const app        = express();
 const httpServer = createServer(app);
@@ -31,9 +32,7 @@ const pool = new PoolManager({
   getJamState: () => broadcastRef.getState().jam,
 });
 
-const SCHEDULE_FILE = process.env['SCHEDULE_FILE'] ?? 'config/schedule.json';
-
-const broadcast = new BroadcastManager({ io, pool, scheduleFile: SCHEDULE_FILE });
+const broadcast = new BroadcastManager({ io, pool });
 broadcastRef = broadcast;
 
 // ─── Static file serving ──────────────────────────────────────────────────────
@@ -46,10 +45,11 @@ app.use('/',        express.static('client/broadcast/dist'));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
-app.use('/auth',   authRouter);
-app.use('/api',    createApiRouter(broadcast, pool));
+app.use('/auth',          authRouter);
+app.use('/api',           createApiRouter(broadcast, pool));
+app.use('/api/schedule',  createScheduleRouter(broadcast));
 // Mount participant API at /go/api so it doesn't conflict with the static /go SPA
-app.use('/go/api', createGoRouter(broadcast, pool));
+app.use('/go/api',        createGoRouter(broadcast, pool));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', ts: Date.now() });
@@ -63,6 +63,28 @@ io.on('connection', (socket) => {
   const pingInterval = setInterval(() => {
     socket.emit('ping');
   }, 10_000);
+
+  socket.on('pool:mark', (data: { itemId: string; event: string; payload?: Record<string, unknown> }) => {
+    const { itemId, event, payload } = data;
+    console.log(`pool:mark — ${event} itemId=${itemId}`);
+
+    switch (event) {
+      case 'displayed':
+        pool.markDisplayed(itemId, socket.id);
+        break;
+      case 'skipped':
+        pool.markSkipped(itemId, socket.id);
+        break;
+      case 'held': {
+        const durationMs = typeof payload?.['duration'] === 'number' ? payload['duration'] : 0;
+        pool.markHeld(itemId, socket.id, durationMs);
+        break;
+      }
+      default:
+        // Silently ignore unknown mark events
+        break;
+    }
+  });
 
   socket.on('disconnect', () => {
     clearInterval(pingInterval);

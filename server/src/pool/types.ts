@@ -9,10 +9,10 @@ export interface RawFile {
 export type RawInput =
   | { type: 'note';      text: string }
   | { type: 'link';      url: string }
-  | { type: 'photo';     file: RawFile }
-  | { type: 'gif';       file: RawFile }
-  | { type: 'clip';      file: RawFile }
-  | { type: 'interview'; segments: Array<{ file: RawFile } | { textOnly: string }> }
+  | { type: 'photo';     file: RawFile; filePath?: string }
+  | { type: 'gif';       file: RawFile; filePath?: string }
+  | { type: 'clip';      file: RawFile; filePath?: string }
+  | { type: 'interview'; segments: Array<{ file: RawFile; filePath?: string } | { textOnly: string }> }
 
 export type ValidatedInput =
   | { type: 'note';      text: string }

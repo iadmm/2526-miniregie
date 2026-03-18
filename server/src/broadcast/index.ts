@@ -4,18 +4,15 @@ import { randomUUID } from 'node:crypto';
 import type { Server, Socket } from 'socket.io';
 import { shouldFire, parseScheduleEntry } from './triggers.js';
 import { validateJamTransition } from './jam-state.js';
-import { insertBroadcastEvent, resetAllMedia } from '../db/queries.js';
+import { insertBroadcastEvent, resetAllMedia, getScheduleEntries, markScheduleEntryFired, resetScheduleStatus } from '../db/queries.js';
 import type { GlobalState, LimitTrigger, MarketTrigger, AppId, JamStatus } from '../../../shared/types.js';
 import type { PoolManager } from '../pool/index.js';
 import { getJamConfig } from '../jam-config.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface ScheduleEntry {
-  at:       string;
-  app?:     string;
-  trigger?: string;
-}
+/** LimitTrigger extended with the DB row id for persistent fired tracking. */
+type DbLimitTrigger = LimitTrigger & { dbId: number };
 
 interface PersistedState {
   jam:       GlobalState['jam'];
@@ -30,7 +27,7 @@ const TICK_MS    = 1_000;
 
 export class BroadcastManager {
   private state:    GlobalState;
-  private schedule: LimitTrigger[];
+  private schedule: DbLimitTrigger[];
 
   private readonly io:   Server;
   private readonly pool: PoolManager;
@@ -45,12 +42,12 @@ export class BroadcastManager {
 
   private readonly cfg: ReturnType<typeof getJamConfig>['broadcast'];
 
-  constructor(options: { io: Server; pool: PoolManager; scheduleFile: string }) {
-    this.io  = options.io;
+  constructor(options: { io: Server; pool: PoolManager }) {
+    this.io   = options.io;
     this.pool = options.pool;
     this.cfg  = getJamConfig().broadcast;
 
-    this.schedule = this.loadSchedule(options.scheduleFile);
+    this.schedule = this.loadSchedule();
     this.state    = this.loadOrInitState();
 
     this.setupSocketHandlers();
@@ -73,8 +70,16 @@ export class BroadcastManager {
     return this.state;
   }
 
-  getSchedule(): ReadonlyArray<LimitTrigger> {
+  getSchedule(): ReadonlyArray<DbLimitTrigger> {
     return this.schedule;
+  }
+
+  /**
+   * Reloads the schedule from DB without modifying any data.
+   * Call this after any admin CRUD operation on schedule entries.
+   */
+  reloadSchedule(): void {
+    this.schedule = this.loadSchedule();
   }
 
   // Compute the absolute timestamp of the next unfired schedule trigger.
@@ -156,10 +161,9 @@ export class BroadcastManager {
     this.state.jam       = { status: 'idle', startedAt: null, endsAt: null, timeRemaining: null };
     this.state.broadcast = { activeApp: 'pre-jam-idle', transition: 'idle', panicState: false, nextTriggerAt: null };
 
-    // Unfire all schedule triggers so they can fire again
-    for (const trigger of this.schedule) {
-      trigger.fired = false;
-    }
+    // Reset all schedule entries in DB and reload so triggers can fire again
+    resetScheduleStatus();
+    this.schedule = this.loadSchedule();
 
     // Clear any pending transition
     this.isTransitioning = false;
@@ -242,11 +246,13 @@ export class BroadcastManager {
     }
 
     // Evaluate limit triggers
+    const now = Date.now();
     for (const trigger of this.schedule) {
       if (trigger.fired) continue;
-      if (!shouldFire(trigger.condition, jam)) continue;
+      if (!shouldFire(trigger.condition, jam, now)) continue;
 
       trigger.fired = true;
+      markScheduleEntryFired(trigger.dbId, now);
       this.logEvent('trigger_fired', { trigger });
       this.dispatch({ type: 'market', appId: trigger.appId, source: 'system' });
     }
@@ -298,18 +304,14 @@ export class BroadcastManager {
   private loadOrInitState(): GlobalState {
     try {
       if (existsSync(STATE_FILE)) {
-        const raw = readFileSync(STATE_FILE, 'utf-8');
+        // NOTE: we no longer use the persisted schedule — fired state lives in DB.
+        // The in-memory schedule was already populated by loadSchedule() reading DB.
+        const raw       = readFileSync(STATE_FILE, 'utf-8');
         const persisted = JSON.parse(raw) as PersistedState;
 
         // Recalculate timeRemaining after restart
         if (persisted.jam.status === 'running' && persisted.jam.endsAt !== null) {
           persisted.jam.timeRemaining = Math.max(0, persisted.jam.endsAt - Date.now());
-        }
-
-        // Restore fired flags from persisted schedule
-        for (const trigger of this.schedule) {
-          const saved = persisted.schedule.find(s => s.appId === trigger.appId && s.condition.at === trigger.condition.at);
-          if (saved?.fired) trigger.fired = true;
         }
 
         return {
@@ -330,6 +332,7 @@ export class BroadcastManager {
   }
 
   private persist(): void {
+    // Schedule fired state is authoritative in DB — not persisted in state.json.
     const data: PersistedState = {
       jam:       this.state.jam,
       activeApp: this.state.broadcast.activeApp,
@@ -345,25 +348,24 @@ export class BroadcastManager {
 
   // ─── Schedule loading ────────────────────────────────────────────────────────
 
-  private loadSchedule(filePath: string): LimitTrigger[] {
-    try {
-      const raw = readFileSync(filePath, 'utf-8');
-      const entries = JSON.parse(raw) as ScheduleEntry[];
-
-      return entries.flatMap(entry => {
-        const appId = entry.app ?? entry.trigger;
-        if (!appId) return [];
-        try {
-          return [{ type: 'limit' as const, condition: parseScheduleEntry(entry.at), appId, fired: false }];
-        } catch (err) {
-          console.warn(`[broadcast] Skipping schedule entry "${entry.at}": ${err}`);
-          return [];
-        }
-      });
-    } catch (err) {
-      console.warn('[broadcast] Failed to load schedule.json:', err);
-      return [];
-    }
+  private loadSchedule(): DbLimitTrigger[] {
+    const entries = getScheduleEntries();
+    return entries.flatMap(entry => {
+      // Skip already-fired entries — they must not re-trigger after a restart
+      if (entry.status === 'fired') return [];
+      try {
+        return [{
+          type:      'limit' as const,
+          condition: parseScheduleEntry(entry.at),
+          appId:     entry.app,
+          fired:     false,
+          dbId:      entry.id,
+        }];
+      } catch (err) {
+        console.warn(`[broadcast] Skipping schedule entry id=${entry.id} "${entry.at}": ${err}`);
+        return [];
+      }
+    });
   }
 
   // ─── Logging ─────────────────────────────────────────────────────────────────

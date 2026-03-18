@@ -1,7 +1,7 @@
-import { eq, and, inArray, notInArray, gte, lte, max, count, sql } from 'drizzle-orm';
+import { eq, and, inArray, notInArray, gte, lte, max, count, sql, asc } from 'drizzle-orm';
 import { db } from './index.js';
-import { mediaItems, mediaEvents, participants, broadcastEvents } from './schema.js';
-import type { MediaItem, MediaEvent, MediaStatus, MediaType, Participant, BroadcastEvent } from '../../../shared/types.js';
+import { mediaItems, mediaEvents, participants, broadcastEvents, scheduleEntries } from './schema.js';
+import type { MediaItem, MediaEvent, MediaStatus, MediaType, Participant, BroadcastEvent, ScheduleEntry, ScheduleEntryStatus } from '../../../shared/types.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -102,6 +102,10 @@ export function getItemById(id: string): MediaItem | null {
 
 export function updateStatus(id: string, status: MediaStatus): void {
   db.update(mediaItems).set({ status }).where(eq(mediaItems.id, id)).run();
+}
+
+export function updateContent(id: string, content: MediaItem['content']): void {
+  db.update(mediaItems).set({ content }).where(eq(mediaItems.id, id)).run();
 }
 
 export function updatePriority(id: string, priority: number): void {
@@ -313,4 +317,62 @@ export function insertBroadcastEvent(event: BroadcastEvent): void {
     payload:   event.payload ?? undefined,
     createdAt: event.createdAt,
   }).run();
+}
+
+// ─── schedule_entries ─────────────────────────────────────────────────────────
+
+function rowToScheduleEntry(row: typeof scheduleEntries.$inferSelect): ScheduleEntry {
+  return {
+    id:         row.id,
+    at:         row.at,
+    app:        row.app,
+    label:      row.label ?? null,
+    status:     row.status as ScheduleEntryStatus,
+    firedAt:    row.firedAt ?? null,
+    createdAt:  row.createdAt,
+    modifiedAt: row.modifiedAt,
+  };
+}
+
+export function getScheduleEntries(): ScheduleEntry[] {
+  return db.select().from(scheduleEntries).orderBy(asc(scheduleEntries.id)).all().map(rowToScheduleEntry);
+}
+
+export function insertScheduleEntry(at: string, app: string, label?: string): ScheduleEntry {
+  const now = Date.now();
+  const row = db.insert(scheduleEntries)
+    .values({ at, app, label: label ?? null, createdAt: now, modifiedAt: now })
+    .returning()
+    .get();
+  return rowToScheduleEntry(row);
+}
+
+export function updateScheduleEntry(
+  id: number,
+  patch: Partial<{ at: string; app: string; label: string | null; status: ScheduleEntryStatus }>,
+): void {
+  db.update(scheduleEntries)
+    .set({ ...patch, modifiedAt: Date.now() })
+    .where(eq(scheduleEntries.id, id))
+    .run();
+}
+
+export function deleteScheduleEntry(id: number): void {
+  db.delete(scheduleEntries).where(eq(scheduleEntries.id, id)).run();
+}
+
+export function markScheduleEntryFired(id: number, firedAt: number): void {
+  db.update(scheduleEntries)
+    .set({ status: 'fired', firedAt, modifiedAt: Date.now() })
+    .where(eq(scheduleEntries.id, id))
+    .run();
+}
+
+/**
+ * Resets all schedule entries to pending — used on JAM reset so triggers can fire again.
+ */
+export function resetScheduleStatus(): void {
+  db.update(scheduleEntries)
+    .set({ status: 'pending', firedAt: null, modifiedAt: Date.now() })
+    .run();
 }

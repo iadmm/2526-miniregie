@@ -157,6 +157,7 @@ router.post(
               mimetype:     req.file.mimetype,
               size:         req.file.size,
             },
+            filePath: req.file.path,
           };
           break;
         }
@@ -172,6 +173,7 @@ router.post(
               mimetype:     req.file.mimetype,
               size:         req.file.size,
             },
+            filePath: req.file.path,
           };
           break;
         }
@@ -187,6 +189,7 @@ router.post(
               mimetype:     req.file.mimetype,
               size:         req.file.size,
             },
+            filePath: req.file.path,
           };
           break;
         }

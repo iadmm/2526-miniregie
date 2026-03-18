@@ -158,6 +158,21 @@ export interface BroadcastEvent {
   createdAt: number;
 }
 
+// ─── Schedule ─────────────────────────────────────────────────────────────────
+
+export type ScheduleEntryStatus = 'pending' | 'fired' | 'skipped';
+
+export interface ScheduleEntry {
+  id:         number;
+  at:         string;              // "H+00:10:00" | "T-04:00:00" | ISO 8601
+  app:        AppId;
+  label:      string | null;
+  status:     ScheduleEntryStatus;
+  firedAt:    number | null;       // unix timestamp ms
+  createdAt:  number;
+  modifiedAt: number;
+}
+
 // ─── JAM config (config/jam.json) ─────────────────────────────────────────────
 
 export interface JamConfig {

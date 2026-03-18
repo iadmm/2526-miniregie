@@ -684,9 +684,12 @@ export function createJamMode(): BroadcastApp {
         // Grace period before committing to layout change
         const slotIdx = 0;
         const existing = collapseTimers.get(slotIdx);
-        if (existing !== undefined) clearTimeout(existing);
+        if (existing !== undefined) {
+          clearTimeout(existing);
+          timers.delete(existing);
+        }
 
-        const collapseId = setTimeout(() => {
+        const collapseId = safeTimeout(() => {
           collapseTimers.delete(slotIdx);
           if (!mounted) return;
           applyLayout(resolveLayout(activeItems), activeItems);

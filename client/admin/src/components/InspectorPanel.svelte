@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Tabs } from 'bits-ui';
   import TickersTab from "./inspector/TickersTab.svelte";
+  import ScheduleTab from "./inspector/ScheduleTab.svelte";
   import SettingsTab from "./inspector/SettingsTab.svelte";
   import PanicTab from "./inspector/PanicTab.svelte";
 </script>
@@ -13,11 +14,13 @@
   <Tabs.Root value="tickers" class="tabs-root">
     <Tabs.List class="tabs-list">
       <Tabs.Trigger value="tickers"  class="tab-trigger">Tickers</Tabs.Trigger>
+      <Tabs.Trigger value="schedule" class="tab-trigger">Schedule</Tabs.Trigger>
       <Tabs.Trigger value="settings" class="tab-trigger">Paramètres</Tabs.Trigger>
       <Tabs.Trigger value="panic"    class="tab-trigger panic-tab">Panic</Tabs.Trigger>
     </Tabs.List>
 
     <Tabs.Content value="tickers"  class="tab-content"><TickersTab  /></Tabs.Content>
+    <Tabs.Content value="schedule" class="tab-content"><ScheduleTab /></Tabs.Content>
     <Tabs.Content value="settings" class="tab-content"><SettingsTab /></Tabs.Content>
     <Tabs.Content value="panic"    class="tab-content"><PanicTab    /></Tabs.Content>
   </Tabs.Root>
