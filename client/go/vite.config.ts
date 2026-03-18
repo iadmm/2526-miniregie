@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { resolve } from 'node:path';
 
 export default defineConfig({
+  root: import.meta.dirname,
   plugins: [
     svelte(),
     VitePWA({
@@ -27,9 +28,11 @@ export default defineConfig({
   resolve: {
     alias: { '@shared': resolve(import.meta.dirname, '../../shared') },
   },
+  base: '/go/',
   server: {
     port: 3002,
     proxy: {
+      '/go/api': 'http://localhost:3000',
       '/api': 'http://localhost:3000',
       '/auth': 'http://localhost:3000',
     },
