@@ -16,4 +16,5 @@ export const APPS = [
   'post-jam-idle',
 ] as const;
 
+/** Use AppId from @shared/types — this is just a convenience alias. */
 export type KnownAppId = typeof APPS[number];

@@ -8,8 +8,9 @@ import {
   deleteItem,
   searchParticipants,
   setBanned,
+  getParticipantById,
 } from "../db/queries.js";
-import type { MediaStatus, AppId, MediaItem, JamConfig } from "../../../shared/types.js";
+import type { MediaStatus, AppId, MediaItem, JamConfig, AuthorStats } from "../../../shared/types.js";
 import type { BroadcastManager } from "../broadcast/index.js";
 import type { PoolManager } from "../pool/index.js";
 import { getJamConfig, updateJamConfig } from "../jam-config.js";
@@ -151,14 +152,21 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
   });
 
   router.get("/items", (req, res) => {
-    const { status, authorId } = req.query as {
+    const { status, authorId, scored } = req.query as {
       status?: string;
       authorId?: string;
+      scored?: string;
     };
 
     const statusFilter = VALID_STATUSES.includes(status as MediaStatus)
       ? (status as MediaStatus)
       : undefined;
+
+    // scored=true + status=ready → return ScoredMediaItem[] with scores and cooldowns
+    if (scored === "true" && statusFilter === "ready") {
+      res.json(pool.getScoredQueue());
+      return;
+    }
 
     const items = getAllItems({
       ...(statusFilter !== undefined && { status: statusFilter }),
@@ -200,6 +208,44 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
     const { id } = req.params as { id: string };
     deleteItem(id);
     res.json({ ok: true });
+  });
+
+  // ─── Pool ─────────────────────────────────────────────────────────────────────
+
+  router.get("/pool/authors", (_req, res) => {
+    const scored = pool.getScoredQueue();
+
+    // Aggregate per-author stats from the scored queue
+    const map = new Map<string, AuthorStats>();
+
+    for (const item of scored) {
+      const { participantId, displayName, team } = item.author;
+      let entry = map.get(participantId);
+      if (entry === undefined) {
+        // Look up ban status synchronously from DB on first encounter
+        const participant = getParticipantById(participantId);
+        entry = {
+          id:             participantId,
+          displayName,
+          team,
+          readyCount:     0,
+          displayedCount: 0,
+          skippedCount:   0,
+          cooldownEndsAt: pool.getAuthorCooldownEndsAt(participantId),
+          banned:         participant?.banned ?? false,
+        };
+        map.set(participantId, entry);
+      }
+      entry.readyCount     += 1;
+      // displayedCount and skippedCount on ScoredMediaItem are per-item totals;
+      // accumulate across all items by this author to get author-level totals
+      entry.displayedCount += item.displayedCount;
+      entry.skippedCount   += item.skippedCount;
+    }
+
+    // Sort by readyCount desc (most active authors first)
+    const result = [...map.values()].sort((a, b) => b.readyCount - a.readyCount);
+    res.json(result);
   });
 
   // ─── Participants ─────────────────────────────────────────────────────────────

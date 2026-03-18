@@ -8,7 +8,7 @@ import {
   getReadyItems, getLastSubmissionAt, getClipCount, insertEvent,
   type ReadyItemFilters, type ScoredRow,
 } from '../db/queries.js';
-import type { GlobalState, MediaItem, MediaType } from '../../../shared/types.js';
+import type { GlobalState, MediaItem, MediaType, ScoredMediaItem } from '../../../shared/types.js';
 import type { RawInput, ValidatedInput } from './types.js';
 import { resolve } from './resolve.js';
 import { getJamConfig } from '../jam-config.js';
@@ -134,15 +134,20 @@ export class PoolManager extends EventEmitter {
 
   // ─── Stats (for GlobalState) ────────────────────────────────────────────────
 
-  getStats(): GlobalState['pool'] {
+  getStats(holdCount = 0): GlobalState['pool'] {
     const now = Date.now();
     const rows = getReadyItems({ excludeTypes: ['ticker'] });
     const authorCounts = this.computeAuthorReadyCounts(rows);
 
-    let freshCount = 0;
+    let freshCount  = 0;
+    let pinnedCount = 0;
+    const byType: Record<string, number> = {};
+
     const scored = rows
       .map(row => {
         if (now - row.submittedAt < this.cfg.freshItemWindowMs) freshCount++;
+        if (row.pinned) pinnedCount++;
+        byType[row.type] = (byType[row.type] ?? 0) + 1;
         return {
           row,
           score: computeScore(row, {
@@ -154,11 +159,57 @@ export class PoolManager extends EventEmitter {
       })
       .sort((a, b) => b.score - a.score);
 
+    const scoreMax = scored.length > 0 ? (scored[0]?.score ?? null) : null;
+    const scoreMin = scored.length > 0 ? (scored[scored.length - 1]?.score ?? null) : null;
+
     return {
       total:         rows.length,
       fresh:         freshCount,
-      queueSnapshot: scored.slice(0, 5).map(s => s.row),
+      queueSnapshot: scored.slice(0, 15).map(s => s.row),
+      byType,
+      pinned:    pinnedCount,
+      scoreMax,
+      scoreMin,
+      holdCount,
     };
+  }
+
+  // ─── Admin scored queue ─────────────────────────────────────────────────────
+
+  getScoredQueue(now: number = Date.now()): ScoredMediaItem[] {
+    const rows = getReadyItems({ excludeTypes: ['ticker'] });
+    const authorCounts = this.computeAuthorReadyCounts(rows);
+
+    return rows
+      .map(row => {
+        const score = computeScore(row, {
+          displayed:       row.displayedCount,
+          skipped:         row.skippedCount,
+          sameAuthorReady: (authorCounts.get(row.author.participantId) ?? 1) - 1,
+        }, now);
+
+        // Item cooldown: hard filter expiry timestamp, null if not in cooldown
+        const cooldownEndsAt = (row.lastActivityAt !== null && now - row.lastActivityAt < this.cfg.itemCooldownMs)
+          ? row.lastActivityAt + this.cfg.itemCooldownMs
+          : null;
+
+        // Author display cooldown: based on in-memory Map populated by markDisplayed()
+        const authorLastDisplay = this.recentDisplayedAuthors.get(row.author.participantId);
+        const authorCooldownEndsAt = (authorLastDisplay !== undefined && now - authorLastDisplay < this.cfg.authorDisplayCooldownMs)
+          ? authorLastDisplay + this.cfg.authorDisplayCooldownMs
+          : null;
+
+        const scoredItem: ScoredMediaItem = {
+          ...row,
+          score,
+          displayedCount:       row.displayedCount,
+          skippedCount:         row.skippedCount,
+          cooldownEndsAt,
+          authorCooldownEndsAt,
+        };
+        return scoredItem;
+      })
+      .sort((a, b) => b.score - a.score);
   }
 
   // ─── Read ───────────────────────────────────────────────────────────────────
@@ -303,6 +354,15 @@ export class PoolManager extends EventEmitter {
   reset(): void {
     this.recentDisplayedAuthors.clear();
     this.emit('update');
+  }
+
+  // ─── Author cooldown (for /api/pool/authors) ─────────────────────────────────
+
+  getAuthorCooldownEndsAt(authorId: string, now = Date.now()): number | null {
+    const lastDisplay = this.recentDisplayedAuthors.get(authorId);
+    if (lastDisplay === undefined) return null;
+    const endsAt = lastDisplay + this.cfg.authorDisplayCooldownMs;
+    return endsAt > now ? endsAt : null;
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────────

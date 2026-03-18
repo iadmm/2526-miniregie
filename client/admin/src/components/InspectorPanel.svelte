@@ -3,7 +3,10 @@
   import TickersTab from "./inspector/TickersTab.svelte";
   import ScheduleTab from "./inspector/ScheduleTab.svelte";
   import SettingsTab from "./inspector/SettingsTab.svelte";
+  import ScoringTab from "./inspector/ScoringTab.svelte";
   import PanicTab from "./inspector/PanicTab.svelte";
+  import PoolHealthTab from "./inspector/PoolHealthTab.svelte";
+  import AuthorsTab from "./inspector/AuthorsTab.svelte";
 </script>
 
 <div class="inspector">
@@ -15,14 +18,20 @@
     <Tabs.List class="tabs-list">
       <Tabs.Trigger value="tickers"  class="tab-trigger">Tickers</Tabs.Trigger>
       <Tabs.Trigger value="schedule" class="tab-trigger">Schedule</Tabs.Trigger>
-      <Tabs.Trigger value="settings" class="tab-trigger">Paramètres</Tabs.Trigger>
+      <Tabs.Trigger value="health"   class="tab-trigger">Health</Tabs.Trigger>
+      <Tabs.Trigger value="authors"  class="tab-trigger">Auteurs</Tabs.Trigger>
+      <Tabs.Trigger value="settings" class="tab-trigger">Params</Tabs.Trigger>
+      <Tabs.Trigger value="scoring"  class="tab-trigger">Scoring</Tabs.Trigger>
       <Tabs.Trigger value="panic"    class="tab-trigger panic-tab">Panic</Tabs.Trigger>
     </Tabs.List>
 
-    <Tabs.Content value="tickers"  class="tab-content"><TickersTab  /></Tabs.Content>
-    <Tabs.Content value="schedule" class="tab-content"><ScheduleTab /></Tabs.Content>
-    <Tabs.Content value="settings" class="tab-content"><SettingsTab /></Tabs.Content>
-    <Tabs.Content value="panic"    class="tab-content"><PanicTab    /></Tabs.Content>
+    <Tabs.Content value="tickers"  class="tab-content"><TickersTab    /></Tabs.Content>
+    <Tabs.Content value="schedule" class="tab-content"><ScheduleTab   /></Tabs.Content>
+    <Tabs.Content value="health"   class="tab-content"><PoolHealthTab /></Tabs.Content>
+    <Tabs.Content value="authors"  class="tab-content"><AuthorsTab    /></Tabs.Content>
+    <Tabs.Content value="settings" class="tab-content"><SettingsTab   /></Tabs.Content>
+    <Tabs.Content value="scoring"  class="tab-content"><ScoringTab    /></Tabs.Content>
+    <Tabs.Content value="panic"    class="tab-content"><PanicTab      /></Tabs.Content>
   </Tabs.Root>
 </div>
 

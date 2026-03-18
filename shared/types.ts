@@ -58,6 +58,16 @@ export interface MediaAuthor {
   role: string;
 }
 
+// ─── Scored item (admin queue view) ──────────────────────────────────────────
+
+export interface ScoredMediaItem extends MediaItem {
+  score: number;
+  displayedCount: number;
+  skippedCount: number;
+  cooldownEndsAt: number | null;       // ms timestamp — null if not in item cooldown
+  authorCooldownEndsAt: number | null; // ms timestamp — null if author not in display cooldown
+}
+
 export interface MediaEvent {
   id: string;
   itemId: string;
@@ -83,6 +93,19 @@ export interface Participant {
   banReason: string | null;
 }
 
+// ─── Author stats (pool/authors endpoint) ────────────────────────────────────
+
+export interface AuthorStats {
+  id:             string;
+  displayName:    string;
+  team:           string;
+  readyCount:     number;       // items currently ready in pool
+  displayedCount: number;       // items displayed this session
+  skippedCount:   number;       // items skipped this session
+  cooldownEndsAt: number | null; // null if author not in display cooldown
+  banned:         boolean;
+}
+
 // ─── Broadcast ───────────────────────────────────────────────────────────────
 
 export type JamStatus = 'idle' | 'running' | 'ended';
@@ -100,11 +123,19 @@ export interface GlobalState {
     transition:    'idle' | 'in_progress';
     panicState:    boolean;
     nextTriggerAt: number | null; // absolute ms of next unfired schedule trigger
+    activeItemIds: string[];      // IDs of items currently displayed by jam-mode (0-3)
+    regime:        'normal' | 'hold' | 'buffer'; // jam-mode fetch pipeline state
   };
   pool: {
-    total: number;
-    fresh: number;
+    total:         number;
+    fresh:         number;
     queueSnapshot: MediaItem[];
+    // Health fields
+    byType:    Record<string, number>; // { photo: 5, note: 12, … }
+    pinned:    number;                 // count of pinned items
+    scoreMax:  number | null;          // score of the top-ranked item (ready, non-ticker)
+    scoreMin:  number | null;          // score of the lowest-ranked item (ready, non-ticker)
+    holdCount: number;                 // cumulative times jam-mode entered hold regime since JAM start
   };
 }
 

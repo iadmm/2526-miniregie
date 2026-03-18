@@ -17,7 +17,6 @@ type DbLimitTrigger = LimitTrigger & { dbId: number };
 interface PersistedState {
   jam:       GlobalState['jam'];
   activeApp: AppId;
-  schedule:  LimitTrigger[];
 }
 
 const STATE_FILE = 'state.json';
@@ -34,6 +33,9 @@ export class BroadcastManager {
 
   private tickInterval:    ReturnType<typeof setInterval> | null = null;
   private persistInterval: ReturnType<typeof setInterval> | null = null;
+
+  // Pool hold counter — incremented each time jam-mode enters hold regime
+  private holdCount = 0;
 
   // Transition coordination
   private isTransitioning              = false;
@@ -70,7 +72,7 @@ export class BroadcastManager {
     return this.state;
   }
 
-  getSchedule(): ReadonlyArray<DbLimitTrigger> {
+  getSchedule(): ReadonlyArray<LimitTrigger> {
     return this.schedule;
   }
 
@@ -150,6 +152,21 @@ export class BroadcastManager {
     this.dispatch({ type: 'market', appId: resumeAppId, source: 'admin' });
   }
 
+  /**
+   * Called by the broadcast client's jam-mode app whenever its active items or
+   * regime change.  Updates the shared GlobalState so the admin UI can observe
+   * what is currently on-air.
+   */
+  updateJamMode(activeItemIds: string[], regime: 'normal' | 'hold' | 'buffer'): void {
+    // Increment hold counter on each transition INTO hold
+    if (regime === 'hold' && this.state.broadcast.regime !== 'hold') {
+      this.holdCount++;
+    }
+    this.state.broadcast.activeItemIds = activeItemIds;
+    this.state.broadcast.regime        = regime;
+    this.emitState();
+  }
+
   reset(): void {
     // Clear all media from DB
     resetAllMedia();
@@ -158,8 +175,9 @@ export class BroadcastManager {
     this.pool.reset();
 
     // Reset JAM state machine
+    this.holdCount       = 0;
     this.state.jam       = { status: 'idle', startedAt: null, endsAt: null, timeRemaining: null };
-    this.state.broadcast = { activeApp: 'pre-jam-idle', transition: 'idle', panicState: false, nextTriggerAt: null };
+    this.state.broadcast = { activeApp: 'pre-jam-idle', transition: 'idle', panicState: false, nextTriggerAt: null, activeItemIds: [], regime: 'normal' };
 
     // Reset all schedule entries in DB and reload so triggers can fire again
     resetScheduleStatus();
@@ -294,7 +312,7 @@ export class BroadcastManager {
   // ─── State emission ─────────────────────────────────────────────────────────
 
   private emitState(): void {
-    this.state.pool = this.pool.getStats();
+    this.state.pool = this.pool.getStats(this.holdCount);
     this.state.broadcast.nextTriggerAt = this.computeNextTriggerAt();
     this.io.emit('state', this.state);
   }
@@ -316,8 +334,8 @@ export class BroadcastManager {
 
         return {
           jam:       persisted.jam,
-          broadcast: { activeApp: persisted.activeApp, transition: 'idle', panicState: false, nextTriggerAt: null },
-          pool:      { total: 0, fresh: 0, queueSnapshot: [] },
+          broadcast: { activeApp: persisted.activeApp, transition: 'idle', panicState: false, nextTriggerAt: null, activeItemIds: [], regime: 'normal' },
+          pool:      { total: 0, fresh: 0, queueSnapshot: [], byType: {}, pinned: 0, scoreMax: null, scoreMin: null, holdCount: 0 },
         };
       }
     } catch (err) {
@@ -326,8 +344,8 @@ export class BroadcastManager {
 
     return {
       jam:       { status: 'idle', startedAt: null, endsAt: null, timeRemaining: null },
-      broadcast: { activeApp: 'pre-jam-idle', transition: 'idle', panicState: false, nextTriggerAt: null },
-      pool:      { total: 0, fresh: 0, queueSnapshot: [] },
+      broadcast: { activeApp: 'pre-jam-idle', transition: 'idle', panicState: false, nextTriggerAt: null, activeItemIds: [], regime: 'normal' },
+      pool:      { total: 0, fresh: 0, queueSnapshot: [], byType: {}, pinned: 0, scoreMax: null, scoreMin: null, holdCount: 0 },
     };
   }
 
@@ -336,7 +354,6 @@ export class BroadcastManager {
     const data: PersistedState = {
       jam:       this.state.jam,
       activeApp: this.state.broadcast.activeApp,
-      schedule:  this.schedule,
     };
     const json = JSON.stringify(data, null, 2);
     const tmp  = `${STATE_FILE}.tmp`;

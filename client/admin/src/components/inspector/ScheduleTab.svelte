@@ -69,6 +69,11 @@
   let pendingDeleteId  = $state<number | null>(null);
   let deleteTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // Clean up the confirmation timer when the component is destroyed
+  $effect(() => () => {
+    if (deleteTimer) clearTimeout(deleteTimer);
+  });
+
   function requestDelete(id: number) {
     if (pendingDeleteId === id) {
       doDelete(id);
@@ -82,6 +87,7 @@
   async function doDelete(id: number) {
     pendingDeleteId = null;
     if (deleteTimer) clearTimeout(deleteTimer);
+    deleteTimer = null;
     try {
       await api.schedule.delete(id);
       await refreshSchedule();

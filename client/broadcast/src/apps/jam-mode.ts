@@ -225,7 +225,7 @@ export function createJamMode(): BroadcastApp {
 
   // Layout state
   let activeItems: MediaItem[] = [];
-  let regime: 'normal' | 'hold' = 'normal';
+  let regime: 'normal' | 'hold' | 'buffer' = 'normal';
   let bufferActive = false;
   let visualCount = 0;
   let currentLayout: LayoutName = 'IDLE';
@@ -293,6 +293,20 @@ export function createJamMode(): BroadcastApp {
 
   function markHeld(item: MediaItem, durationMs: number): void {
     socket?.emit('pool:mark', { itemId: item.id, event: 'held', payload: { duration: durationMs } });
+  }
+
+  // ── On-air state reporting ────────────────────────────────────────────────
+
+  /**
+   * Emits the current on-air state to the server so that the admin UI can
+   * observe what jam-mode is displaying.  Called after any change to
+   * `activeItems` or `regime`.
+   */
+  function emitJamState(): void {
+    socket?.emit('jam:state-update', {
+      activeItemIds: activeItems.map(i => i.id),
+      regime,
+    });
   }
 
   // ── Layout rendering ──────────────────────────────────────────────────────
@@ -505,6 +519,7 @@ export function createJamMode(): BroadcastApp {
 
   function removeItemFromActive(id: string): void {
     activeItems = activeItems.filter(i => i.id !== id);
+    emitJamState();
   }
 
   function addItemToActive(item: MediaItem): void {
@@ -517,6 +532,7 @@ export function createJamMode(): BroadcastApp {
       }
     }
     activeItems.push(item);
+    emitJamState();
     const layout = resolveLayout(activeItems);
     applyLayout(layout, activeItems);
   }
@@ -588,6 +604,7 @@ export function createJamMode(): BroadcastApp {
     if (nextItem === null) {
       // Enter hold regime
       regime = 'hold';
+      emitJamState();
       holdStartTime = Date.now();
 
       // If there are active items in hold, schedule rebounce
@@ -613,6 +630,7 @@ export function createJamMode(): BroadcastApp {
       holdStartTime = 0;
     }
     regime = 'normal';
+    emitJamState();
 
     scheduleItem(nextItem);
   }
@@ -657,6 +675,8 @@ export function createJamMode(): BroadcastApp {
         visualCount++;
         if (visualCount % BUFFER_EVERY === 0) {
           bufferActive = true;
+          regime = 'buffer';
+          emitJamState();
           removeItemFromActive(item.id);
           markDisplayed(item);
           applyLayout(resolveLayout(activeItems), activeItems);
@@ -664,6 +684,8 @@ export function createJamMode(): BroadcastApp {
           safeTimeout(() => {
             if (!mounted) return;
             bufferActive = false;
+            regime = 'normal';
+            emitJamState();
             fetchNextVisual();
           }, BUFFER_DURATION);
           return;
@@ -733,6 +755,7 @@ export function createJamMode(): BroadcastApp {
         holdTimer = null;
       }
       regime = 'normal';
+      emitJamState();
       fetchNext();
     } else if (activeItems.length < 2) {
       // Slot available — opportunistic fetch
@@ -770,6 +793,9 @@ export function createJamMode(): BroadcastApp {
 
     unmount(): void {
       mounted = false;
+
+      // Notify the server that jam-mode is no longer active
+      socket?.emit('jam:state-update', { activeItemIds: [], regime: 'normal' });
 
       clearAllTimers();
 

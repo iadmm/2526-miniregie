@@ -1,4 +1,4 @@
-import type { MediaStatus, AppId, Participant, MediaItem, GlobalState, LimitTrigger, JamConfig, ScheduleEntry } from '@shared/types';
+import type { MediaStatus, AppId, Participant, MediaItem, ScoredMediaItem, GlobalState, LimitTrigger, JamConfig, ScheduleEntry, AuthorStats } from '@shared/types';
 
 // ─── Error type ───────────────────────────────────────────────────────────────
 
@@ -154,11 +154,18 @@ export const api = {
     },
   },
 
+  pool: {
+    authors(): Promise<AuthorStats[]> {
+      return request('/api/pool/authors');
+    },
+  },
+
   items: {
-    list(filters?: { status?: MediaStatus; authorId?: string }): Promise<MediaItem[]> {
+    list(filters?: { status?: MediaStatus; authorId?: string; scored?: boolean }): Promise<MediaItem[] | ScoredMediaItem[]> {
       const params = new URLSearchParams();
       if (filters?.status) params.set('status', filters.status);
       if (filters?.authorId) params.set('authorId', filters.authorId);
+      if (filters?.scored) params.set('scored', 'true');
       const qs = params.toString();
       return request(`/api/items${qs ? `?${qs}` : ''}`);
     },

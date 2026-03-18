@@ -44,13 +44,15 @@ async function fetchLinkMeta(url: string): Promise<{
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8_000);
 
+    const MAX_BYTES = 256 * 1024; // 256 KB — enough for any <head> section
     let html: string;
     try {
       const res = await fetch(url, {
         signal: controller.signal,
         headers: { 'User-Agent': 'MiniRegie/1.0' },
       });
-      html = await res.text();
+      const buf = await res.arrayBuffer();
+      html = new TextDecoder().decode(buf.slice(0, MAX_BYTES));
     } finally {
       clearTimeout(timeout);
     }
@@ -72,7 +74,8 @@ async function fetchLinkMeta(url: string): Promise<{
       thumbnail: imageMatch?.[1] ?? null,
       siteName:  siteMatch?.[1] ?? null,
     };
-  } catch {
+  } catch (err) {
+    console.warn('[resolve] fetchLinkMeta failed for', url, err instanceof Error ? err.message : err);
     return { title: null, thumbnail: null, siteName: null };
   }
 }
@@ -154,6 +157,11 @@ export async function resolve(item: {
         thumbnail: validated.thumbnail ?? '',
         caption:   null,
       };
+    }
+
+    case 'ticker': {
+      const validated = item.content as { text: string };
+      return { text: validated.text };
     }
 
     case 'interview': {

@@ -20,11 +20,9 @@
   });
 
   // ─── Schedule ─────────────────────────────────────────────────────────────
+  // Initial load + polling while JAM is running (ScheduleTab handles its own load)
   $effect(() => {
     refreshSchedule();
-  });
-
-  $effect(() => {
     if (jam?.status !== 'running') return;
     const t = setInterval(refreshSchedule, 5000);
     return () => clearInterval(t);

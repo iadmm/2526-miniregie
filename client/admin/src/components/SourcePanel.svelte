@@ -1,26 +1,50 @@
 <script lang="ts">
   import { Tabs } from 'bits-ui';
+  import { onDestroy } from 'svelte';
   import { api } from '../lib/api.ts';
   import { socket } from '../lib/socket.svelte.ts';
-  import type { MediaItem, MediaStatus } from '@shared/types';
+  import type { MediaItem, MediaStatus, ScoredMediaItem } from '@shared/types';
+  import OnAirPanel from './OnAirPanel.svelte';
 
-  // ─── Queue tab ────────────────────────────────────────────────────────────
-  let items    = $state<MediaItem[]>([]);
-  let filter   = $state<MediaStatus | 'all'>('pending');
-  let loading  = $state(false);
+  // ─── Queue tab state ──────────────────────────────────────────────────────
+  // 'ready' tab uses scored items; 'pending'/'evicted'/'all' use plain MediaItem[]
+  let filter = $state<MediaStatus | 'all'>('ready');
 
-  const filteredItems = $derived(
-    filter === 'all' ? items : items.filter(i => i.status === filter),
+  // Separate stores so types stay narrow
+  let scoredItems  = $state<ScoredMediaItem[]>([]);
+  let plainItems   = $state<MediaItem[]>([]);
+  let loading      = $state(false);
+
+  // Ticker for live cooldown countdown — single interval, not per-item
+  let now = $state(Date.now());
+  const clockInterval = setInterval(() => { now = Date.now(); }, 1000);
+  onDestroy(() => clearInterval(clockInterval));
+
+  // Derived list shown in the table
+  const visibleScored = $derived(scoredItems);
+  const visiblePlain  = $derived(
+    filter === 'all' ? plainItems : plainItems.filter(i => i.status === filter),
   );
 
   async function loadItems() {
     loading = true;
     try {
-      items = await api.items.list();
+      if (filter === 'ready') {
+        scoredItems = (await api.items.list({ status: 'ready', scored: true })) as ScoredMediaItem[];
+      } else {
+        const status = filter === 'all' ? undefined : filter;
+        plainItems = (await api.items.list({ ...(status ? { status } : {}) })) as MediaItem[];
+      }
     } catch { /* ignore */ } finally {
       loading = false;
     }
   }
+
+  // Reload when filter changes
+  $effect(() => {
+    void filter; // declare dependency
+    loadItems();
+  });
 
   async function setStatus(id: string, status: MediaStatus) {
     try {
@@ -61,7 +85,6 @@
 
   // ─── Socket + polling ─────────────────────────────────────────────────────
   $effect(() => {
-    loadItems();
     socket.on('pool:item:ready', loadItems);
     const t = setInterval(loadItems, 5000);
     return () => {
@@ -78,12 +101,34 @@
     if ('url' in c) return c.url.slice(0, 50);
     return item.type;
   }
+
+  // Format ms duration as M:SS
+  function formatCountdown(ms: number): string {
+    if (ms <= 0) return '0:00';
+    const totalSec = Math.ceil(ms / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  // Score colour class
+  function scoreClass(score: number): string {
+    if (score > 600) return 'score-high';
+    if (score >= 300) return 'score-mid';
+    return 'score-low';
+  }
+
+  // Count displayed/visible items
+  const itemCount = $derived(filter === 'ready' ? visibleScored.length : visiblePlain.length);
 </script>
 
 <div class="source-panel">
   <div class="panel-header">
     <span class="panel-label">Source / Contenu</span>
   </div>
+
+  <!-- ON AIR section — visible only when jam-mode is active -->
+  <OnAirPanel />
 
   <Tabs.Root value="queue" class="tabs-root">
     <Tabs.List class="tabs-list">
@@ -94,54 +139,121 @@
     <!-- ── Queue tab ── -->
     <Tabs.Content value="queue" class="tab-content queue-tab-content">
       <div class="filter-bar">
-        {#each (['pending', 'ready', 'evicted', 'all'] as const) as f}
-          <button
-            class="filter-btn"
-            class:active={filter === f}
-            onclick={() => { filter = f; }}
-          >{f}</button>
-        {/each}
-        <span class="item-count">{filteredItems.length}</span>
+        <button
+          class="filter-btn"
+          class:active={filter === 'ready'}
+          onclick={() => { filter = 'ready'; }}
+        >Queue ↓</button>
+        <button
+          class="filter-btn"
+          class:active={filter === 'pending'}
+          onclick={() => { filter = 'pending'; }}
+        >À approuver</button>
+        <button
+          class="filter-btn"
+          class:active={filter === 'evicted'}
+          onclick={() => { filter = 'evicted'; }}
+        >Évictés</button>
+        <button
+          class="filter-btn"
+          class:active={filter === 'all'}
+          onclick={() => { filter = 'all'; }}
+        >Tous</button>
+        <span class="item-count">{itemCount}</span>
       </div>
 
       <div class="item-list">
-        {#if loading && items.length === 0}
+        {#if loading && itemCount === 0}
           <div class="empty">Chargement…</div>
-        {:else if filteredItems.length === 0}
-          <div class="empty">Aucun item {filter !== 'all' ? `(${filter})` : ''}</div>
-        {:else}
-          {#each filteredItems as item (item.id)}
-            <div class="item-row">
-              <div class="item-info">
-                <span class="item-type-badge">{item.type}</span>
-                <span class="item-author">{item.author.displayName}</span>
-                <span class="item-preview">{itemPreview(item)}</span>
-              </div>
-              <div class="item-actions">
-                {#if item.status === 'pending'}
-                  <button
-                    class="btn-action ready"
-                    onclick={() => setStatus(item.id, 'ready')}
-                    title="Approuver → ready"
-                  >✓</button>
-                {:else if item.status === 'ready'}
+
+        {:else if filter === 'ready'}
+          <!-- ── Scored queue view ── -->
+          {#if visibleScored.length === 0}
+            <div class="empty">File vide</div>
+          {:else}
+            {#each visibleScored as item (item.id)}
+              {@const itemCooldownMs  = item.cooldownEndsAt  !== null ? item.cooldownEndsAt  - now : null}
+              {@const authorCooldownMs = item.authorCooldownEndsAt !== null ? item.authorCooldownEndsAt - now : null}
+              <div class="item-row scored-row">
+                <div class="item-info">
+                  <!-- Score badge -->
+                  <span class="item-score {scoreClass(item.score)}">{item.score}</span>
+                  <!-- Type badge -->
+                  <span class="item-type-badge">{item.type}</span>
+                  <!-- Author (with author cooldown dot) -->
+                  <span class="item-author">
+                    {#if authorCooldownMs !== null && authorCooldownMs > 0}
+                      <span class="author-cooldown-dot" title="Author cooldown active">&#9679;</span>
+                    {/if}
+                    {item.author.displayName}
+                  </span>
+                  <!-- Preview -->
+                  <span class="item-preview">{itemPreview(item)}</span>
+                  <!-- Display/Skip counters -->
+                  <span class="item-counters">D:{item.displayedCount} S:{item.skippedCount}</span>
+                </div>
+                <div class="item-actions">
                   <button
                     class="btn-action evict"
                     onclick={() => setStatus(item.id, 'evicted')}
                     title="Évincer"
                   >✗</button>
-                {/if}
-                {#if item.status !== 'evicted'}
                   <button
                     class="btn-action pin"
                     class:active={item.pinned}
                     onclick={() => togglePin(item.id, item.pinned)}
                     title={item.pinned ? 'Dépingler' : 'Épingler'}
                   >📌</button>
+                </div>
+
+                <!-- Item cooldown badge (below the row, spans full width) -->
+                {#if itemCooldownMs !== null && itemCooldownMs > 0}
+                  <div class="cooldown-badge">
+                    <span>&#9203; cooldown {formatCountdown(itemCooldownMs)}</span>
+                  </div>
                 {/if}
               </div>
-            </div>
-          {/each}
+            {/each}
+          {/if}
+
+        {:else}
+          <!-- ── Plain items view (pending / evicted / all) ── -->
+          {#if visiblePlain.length === 0}
+            <div class="empty">Aucun item {filter !== 'all' ? `(${filter})` : ''}</div>
+          {:else}
+            {#each visiblePlain as item (item.id)}
+              <div class="item-row">
+                <div class="item-info">
+                  <span class="item-type-badge">{item.type}</span>
+                  <span class="item-author">{item.author.displayName}</span>
+                  <span class="item-preview">{itemPreview(item)}</span>
+                </div>
+                <div class="item-actions">
+                  {#if item.status === 'pending'}
+                    <button
+                      class="btn-action ready"
+                      onclick={() => setStatus(item.id, 'ready')}
+                      title="Approuver → ready"
+                    >✓</button>
+                  {:else if item.status === 'ready'}
+                    <button
+                      class="btn-action evict"
+                      onclick={() => setStatus(item.id, 'evicted')}
+                      title="Évincer"
+                    >✗</button>
+                  {/if}
+                  {#if item.status !== 'evicted'}
+                    <button
+                      class="btn-action pin"
+                      class:active={item.pinned}
+                      onclick={() => togglePin(item.id, item.pinned)}
+                      title={item.pinned ? 'Dépingler' : 'Épingler'}
+                    >📌</button>
+                  {/if}
+                </div>
+              </div>
+            {/each}
+          {/if}
         {/if}
       </div>
     </Tabs.Content>
@@ -287,6 +399,7 @@
   .item-row {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     padding: 6px 10px;
     border-bottom: 1px solid var(--border-dim);
@@ -294,6 +407,12 @@
   }
 
   .item-row:hover { background: var(--bg-hover); }
+
+  /* Scored row: item-info takes full width above the cooldown badge */
+  .scored-row {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
 
   .item-info {
     flex: 1;
@@ -303,6 +422,19 @@
     min-width: 0;
     overflow: hidden;
   }
+
+  /* Score badge — monospace, colour-coded */
+  .item-score {
+    font-size: 10px;
+    font-family: monospace;
+    font-weight: 700;
+    width: 40px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .score-high { color: #22c55e; }
+  .score-mid  { color: #f59e0b; }
+  .score-low  { color: #ef4444; }
 
   .item-type-badge {
     font-size: 8px;
@@ -319,10 +451,20 @@
     font-size: 10px;
     color: var(--accent);
     flex-shrink: 0;
-    max-width: 60px;
+    max-width: 70px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  /* Blue dot indicating author is in display cooldown */
+  .author-cooldown-dot {
+    color: #60a5fa;
+    font-size: 8px;
+    flex-shrink: 0;
   }
 
   .item-preview {
@@ -334,10 +476,27 @@
     flex: 1;
   }
 
+  /* Displayed/skipped counters */
+  .item-counters {
+    font-size: 9px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-family: monospace;
+  }
+
   .item-actions {
     display: flex;
     gap: 2px;
     flex-shrink: 0;
+  }
+
+  /* Cooldown badge — full-width row below the item info */
+  .cooldown-badge {
+    width: 100%;
+    font-size: 9px;
+    color: #f59e0b;
+    padding: 0 0 2px 48px; /* indent past score column */
   }
 
   .btn-action {

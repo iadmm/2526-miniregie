@@ -64,6 +64,20 @@ io.on('connection', (socket) => {
     socket.emit('ping');
   }, 10_000);
 
+  // jam-mode client reports its current on-air state so the admin can observe it
+  socket.on('jam:state-update', (data: unknown) => {
+    if (
+      typeof data === 'object' && data !== null &&
+      'activeItemIds' in data && Array.isArray((data as Record<string, unknown>)['activeItemIds']) &&
+      'regime' in data && typeof (data as Record<string, unknown>)['regime'] === 'string'
+    ) {
+      const raw = data as { activeItemIds: unknown[]; regime: string };
+      const ids = raw.activeItemIds.filter((x): x is string => typeof x === 'string');
+      const regime = raw.regime === 'hold' ? 'hold' : raw.regime === 'buffer' ? 'buffer' : 'normal';
+      broadcast.updateJamMode(ids, regime);
+    }
+  });
+
   socket.on('pool:mark', (data: { itemId: string; event: string; payload?: Record<string, unknown> }) => {
     const { itemId, event, payload } = data;
     console.log(`pool:mark — ${event} itemId=${itemId}`);
