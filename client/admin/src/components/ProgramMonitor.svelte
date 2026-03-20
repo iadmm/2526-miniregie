@@ -1,38 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api } from '../lib/api.ts';
   import { socketState } from '../lib/socket.svelte.ts';
-  import type { AppId } from '@shared/types';
+  import Timecodes from './Timecodes.svelte';
 
   const BROADCAST_URL = (import.meta.env.VITE_BROADCAST_URL as string | undefined) ?? '/';
 
-  const APPS: { id: AppId; label: string }[] = [
-    { id: 'pre-jam-idle',     label: 'Attente' },
-    { id: 'countdown-to-jam', label: 'Chrono' },
-    { id: 'jam-mode',         label: 'JAM' },
-    { id: 'micro-trottoir',   label: 'Micro-trottoir' },
-    { id: 'end-of-countdown', label: 'Fin chrono' },
-    { id: 'post-jam-idle',    label: 'Post-JAM' },
-  ];
-
   const activeApp       = $derived(socketState.globalState?.broadcast.activeApp ?? null);
   const isTransitioning = $derived(socketState.globalState?.broadcast.transition === 'in_progress');
-
-  let dispatching = $state(false);
-  let dispatchErr = $state<string | null>(null);
-
-  async function dispatch(appId: AppId): Promise<void> {
-    if (isTransitioning || dispatching) return;
-    dispatching = true;
-    dispatchErr = null;
-    try {
-      await api.broadcast.dispatch(appId);
-    } catch (e: unknown) {
-      dispatchErr = e instanceof Error ? e.message : 'Erreur';
-    } finally {
-      dispatching = false;
-    }
-  }
 
   // --- Pan/zoom state ---
   const NATIVE_W = 1920;
@@ -143,28 +117,7 @@
     <button class="zoom-reset" onclick={resetView} title="Reset view (dbl-click)">↺</button>
   </div>
 
-  <!-- App switcher -->
-  <div class="switcher">
-    <div class="switcher-label">App switch</div>
-    {#if dispatchErr}
-      <div class="error-msg" style="margin-bottom:6px;">{dispatchErr}</div>
-    {/if}
-    <div class="app-grid">
-      {#each APPS as app (app.id)}
-        <button
-          class="app-btn"
-          class:active={app.id === activeApp}
-          onclick={() => dispatch(app.id)}
-          disabled={dispatching || isTransitioning}
-        >
-          {app.label}
-          {#if app.id === activeApp}
-            <span class="live-dot"></span>
-          {/if}
-        </button>
-      {/each}
-    </div>
-  </div>
+  <Timecodes />
 </div>
 
 <style>
@@ -238,63 +191,4 @@
     color: #fff;
   }
 
-  /* App switcher */
-  .switcher {
-    flex-shrink: 0;
-    padding: 8px 10px;
-    background: var(--bg-panel);
-    border-top: 1px solid var(--border-dim);
-  }
-
-  .switcher-label {
-    font-size: 9px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-dim);
-    margin-bottom: 6px;
-  }
-
-  .app-grid {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-  }
-
-  .app-btn {
-    padding: 4px 10px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-muted);
-    font-size: 11px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: background 0.1s, color 0.1s, border-color 0.1s;
-  }
-
-  .app-btn:hover:not(:disabled) {
-    background: var(--bg-hover);
-    color: var(--text);
-  }
-
-  .app-btn.active {
-    background: rgba(232,124,42,0.12);
-    border-color: var(--accent);
-    color: var(--accent);
-    font-weight: 600;
-  }
-
-  .app-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .live-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--live);
-    box-shadow: 0 0 4px var(--live);
-  }
 </style>

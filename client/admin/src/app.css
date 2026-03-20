@@ -10,6 +10,7 @@
 
 :root {
   /* Backgrounds — near-black, layered */
+  --bg-deep:     #0d0d0d;
   --bg:          #1a1a1a;
   --bg-panel:    #222222;
   --bg-surface:  #2a2a2a;

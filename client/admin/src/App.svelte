@@ -1,155 +1,127 @@
 <script lang="ts">
-  import { Tabs } from 'bits-ui';
-  import { api } from './lib/api.ts';
-  import type { Participant } from '@shared/types';
-  import Login          from './components/Login.svelte';
-  import TopBar         from './components/TopBar.svelte';
-  import SourcePanel    from './components/SourcePanel.svelte';
-  import EditTimeline   from './components/EditTimeline.svelte';
-  import InspectorPanel from './components/InspectorPanel.svelte';
-  import OnAirPanel    from './components/OnAirPanel.svelte';
-
-  type View = 'loading' | 'login' | 'dashboard';
-
-  let view      = $state<View>('loading');
-  let me        = $state<Participant | null>(null);
-  let authError = $state<string | null>(null);
-
-  $effect(() => {
-    api.auth
-      .me()
-      .then(({ participant }) => {
-        if (participant.role !== 'admin') {
-          authError = 'Accès réservé aux admins.';
-          view = 'login';
-        } else {
-          me   = participant;
-          view = 'dashboard';
-        }
-      })
-      .catch(() => { view = 'login'; });
-  });
-
-  function handleLogin(participant: Participant): void {
-    me        = participant;
-    authError = null;
-    view      = 'dashboard';
-  }
-
-  function handleLogout(): void {
-    me   = null;
-    view = 'login';
-  }
+  import { PaneGroup, Pane, PaneResizer } from "paneforge";
+  import ProgramMonitor from "./components/ProgramMonitor.svelte";
 </script>
 
-{#if view === 'loading'}
-  <div class="full-center">
-    <span class="loading-text">Vérification de la session…</span>
-  </div>
+<!-- TopBar -->
+<header class="topbar">
+  <span class="topbar-logo">MiniRégie</span>
+  <span class="topbar-status text-muted">Admin</span>
+</header>
 
-{:else if view === 'login'}
-  <Login {authError} onLogin={handleLogin} />
+<!-- Resizable shell -->
+<main class="shell">
+  <PaneGroup direction="vertical" autoSaveId="admin-rows">
+    <!-- Row 1: 3 columns -->
+    <Pane defaultSize={60} minSize={20}>
+      <PaneGroup direction="horizontal" autoSaveId="admin-row1">
+        <Pane defaultSize={33} minSize={10}>
+          <ProgramMonitor />
+        </Pane>
+        <PaneResizer />
+        <Pane defaultSize={34} minSize={10}>
+          <div class="placeholder-panel">
+            <div class="panel-header"><span class="panel-label">Panel 2</span></div>
+            <div class="panel-body"></div>
+          </div>
+        </Pane>
+        <PaneResizer />
+        <Pane defaultSize={33} minSize={10}>
+          <div class="placeholder-panel">
+            <div class="panel-header"><span class="panel-label">Panel 3</span></div>
+            <div class="panel-body"></div>
+          </div>
+        </Pane>
+      </PaneGroup>
+    </Pane>
 
-{:else if view === 'dashboard' && me}
-  <div class="workspace">
-    <TopBar {me} onLogout={handleLogout} />
+    <PaneResizer />
 
-    <OnAirPanel />
-
-    <div class="body">
-      <!-- Main zone: Queue / Timeline tabs -->
-      <Tabs.Root value="queue" class="main-tabs">
-        <Tabs.List class="main-tab-list">
-          <Tabs.Trigger value="queue"    class="main-tab-trigger">Queue</Tabs.Trigger>
-          <Tabs.Trigger value="timeline" class="main-tab-trigger">Timeline</Tabs.Trigger>
-        </Tabs.List>
-        <Tabs.Content value="queue"    class="main-tab-content"><SourcePanel /></Tabs.Content>
-        <Tabs.Content value="timeline" class="main-tab-content"><EditTimeline /></Tabs.Content>
-      </Tabs.Root>
-
-      <!-- Side panel -->
-      <aside class="side-panel">
-        <InspectorPanel {me} />
-      </aside>
-    </div>
-  </div>
-{/if}
+    <!-- Row 2: 2 columns -->
+    <Pane defaultSize={40} minSize={15}>
+      <PaneGroup direction="horizontal" autoSaveId="admin-row2">
+        <Pane defaultSize={50} minSize={15}>
+          <div class="placeholder-panel">
+            <div class="panel-header"><span class="panel-label">Panel 4</span></div>
+            <div class="panel-body"></div>
+          </div>
+        </Pane>
+        <PaneResizer />
+        <Pane defaultSize={50} minSize={15}>
+          <div class="placeholder-panel">
+            <div class="panel-header"><span class="panel-label">Panel 5</span></div>
+            <div class="panel-body"></div>
+          </div>
+        </Pane>
+      </PaneGroup>
+    </Pane>
+  </PaneGroup>
+</main>
 
 <style>
-  .full-center {
+  .topbar {
     display: flex;
     align-items: center;
-    justify-content: center;
-    height: 100vh;
-    background: var(--bg);
-  }
-
-  .loading-text {
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-
-  .workspace {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
-    background: var(--bg);
-  }
-
-  .body {
-    flex: 1;
-    display: flex;
-    overflow: hidden;
-    min-height: 0;
-  }
-
-  :global(.main-tabs) {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-width: 0;
-  }
-
-  :global(.main-tab-list) {
-    display: flex;
-    border-bottom: 1px solid var(--border-dim);
+    gap: 12px;
+    height: 36px;
+    padding: 0 12px;
     background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
 
-  :global(.main-tab-trigger) {
-    padding: 8px 20px;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text-muted);
-    font-size: 11px;
+  .topbar-logo {
+    font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
+    color: var(--accent);
   }
 
-  :global(.main-tab-trigger:hover)                 { color: var(--text); background: var(--bg-hover); }
-  :global(.main-tab-trigger[data-state="active"])  { color: var(--accent); border-bottom-color: var(--accent); }
+  .shell {
+    height: calc(100vh - 36px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 
-  :global(.main-tab-content) {
+  /* paneforge root fills the shell */
+  :global(.shell > [data-pane-group]) {
     flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
+    height: 100%;
   }
 
-  .side-panel {
-    width: 300px;
-    flex-shrink: 0;
-    border-left: 1px solid var(--border-dim);
-    overflow: hidden;
+  /* nested pane groups fill their pane */
+  :global([data-pane] > [data-pane-group]) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .placeholder-panel {
     display: flex;
     flex-direction: column;
+    height: 100%;
+    background: var(--bg-panel);
+  }
+
+  :global([data-pane-resizer][data-direction="horizontal"]) {
+    width: 3px;
+    cursor: col-resize;
+    background: var(--border-dim);
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  :global([data-pane-resizer][data-direction="vertical"]) {
+    height: 3px;
+    cursor: row-resize;
+    background: var(--border-dim);
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  :global([data-pane-resizer]:hover),
+  :global([data-pane-resizer][data-active]) {
+    background: var(--accent);
   }
 </style>
