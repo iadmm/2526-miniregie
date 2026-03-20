@@ -174,6 +174,36 @@ export const api = {
     },
   },
 
+  queue: {
+    main(filters?: { types?: string; excludeTypes?: string }): Promise<MediaItem[]> {
+      const params = new URLSearchParams();
+      if (filters?.types)        params.set('types', filters.types);
+      if (filters?.excludeTypes) params.set('excludeTypes', filters.excludeTypes);
+      const qs = params.toString();
+      return request(`/api/queue/main${qs ? `?${qs}` : ''}`);
+    },
+
+    played(filters?: { types?: string }): Promise<(MediaItem & { playedAt: number })[]> {
+      const params = new URLSearchParams();
+      if (filters?.types) params.set('types', filters.types);
+      const qs = params.toString();
+      return request(`/api/queue/played${qs ? `?${qs}` : ''}`);
+    },
+
+    reorder(ids: string[]): Promise<{ ok: boolean }> {
+      return request('/api/queue/reorder', {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+      });
+    },
+
+    replay(id: string): Promise<{ ok: boolean }> {
+      return request(`/api/queue/${encodeURIComponent(id)}/replay`, {
+        method: 'POST',
+      });
+    },
+  },
+
   items: {
     list(filters?: { status?: MediaStatus; authorId?: string; scored?: boolean }): Promise<MediaItem[] | ScoredMediaItem[]> {
       const params = new URLSearchParams();

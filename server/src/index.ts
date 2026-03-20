@@ -12,6 +12,7 @@ import authRouter            from './routes/auth.js';
 import createApiRouter       from './routes/api.js';
 import createGoRouter        from './routes/go.js';
 import createScheduleRouter  from './routes/schedule.js';
+import createQueueRouter     from './routes/queue.js';
 
 const app        = express();
 const httpServer = createServer(app);
@@ -48,6 +49,7 @@ app.use('/',        express.static('client/broadcast/dist'));
 app.use('/auth',          authRouter);
 app.use('/api',           createApiRouter(broadcast, pool));
 app.use('/api/schedule',  createScheduleRouter(broadcast));
+app.use('/api/queue',     createQueueRouter(pool));
 // Mount participant API at /go/api so it doesn't conflict with the static /go SPA
 app.use('/go/api',        createGoRouter(broadcast, pool));
 

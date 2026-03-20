@@ -2,13 +2,13 @@
 
 export type MediaType = 'photo' | 'gif' | 'note' | 'clip' | 'link' | 'youtube' | 'interview' | 'ticker';
 export type MediaStatus = 'pending' | 'ready' | 'played' | 'evicted';
-export type MediaEventType = 'displayed' | 'skipped' | 'held' | 'evicted' | 'enriched';
+export type MediaEventType = 'displayed' | 'skipped' | 'held' | 'evicted' | 'enriched' | 'replayed';
 
 export interface MediaItem {
   id: string;
   type: MediaType;
   content: MediaContent;
-  priority: number;
+  queuePosition: number | null; // position in queue.main (null = not yet placed or played)
   status: MediaStatus;
   submittedAt: number; // timestamp ms
   author: MediaAuthor;

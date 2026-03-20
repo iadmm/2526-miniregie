@@ -73,12 +73,12 @@ function makeBroadcast(jamStatus: 'idle' | 'running' | 'ended' = 'running'): Bro
  */
 function makePool(overrides: Partial<{ addItem: PoolManager['addItem'] }> = {}): PoolManager {
   const defaultAddItem: PoolManager['addItem'] = (_raw, _participantId) => ({
-    id:          'item-123',
-    type:        'note',
-    content:     { text: 'hello' },
-    priority:    100,
-    status:      'pending',
-    submittedAt: Date.now(),
+    id:            'item-123',
+    type:          'note',
+    content:       { text: 'hello' },
+    queuePosition: null,
+    status:        'pending',
+    submittedAt:   Date.now(),
     author: {
       participantId: fakeParticipant.id,
       displayName:   fakeParticipant.displayName,
@@ -127,12 +127,12 @@ describe('POST /go/api/submit', () => {
   it('201 — ticker submission returns item', async () => {
     const pool = makePool({
       addItem: (_raw, _participantId) => ({
-        id:          'item-ticker',
-        type:        'note',
-        content:     { text: 'Hello from ticker' },
-        priority:    100,
-        status:      'pending',
-        submittedAt: Date.now(),
+        id:            'item-ticker',
+        type:          'note',
+        content:       { text: 'Hello from ticker' },
+        queuePosition: null,
+        status:        'pending',
+        submittedAt:   Date.now(),
         author: {
           participantId: fakeParticipant.id,
           displayName:   fakeParticipant.displayName,
@@ -158,12 +158,12 @@ describe('POST /go/api/submit', () => {
   it('201 — photo submission returns item', async () => {
     const pool = makePool({
       addItem: (_raw, _participantId) => ({
-        id:          'item-photo',
-        type:        'photo',
-        content:     { url: '/uploads/photo.jpg', caption: null },
-        priority:    100,
-        status:      'pending',
-        submittedAt: Date.now(),
+        id:            'item-photo',
+        type:          'photo',
+        content:       { url: '/uploads/photo.jpg', caption: null },
+        queuePosition: null,
+        status:        'pending',
+        submittedAt:   Date.now(),
         author: {
           participantId: fakeParticipant.id,
           displayName:   fakeParticipant.displayName,
@@ -192,12 +192,12 @@ describe('POST /go/api/submit', () => {
   it('201 — clip submission returns item', async () => {
     const pool = makePool({
       addItem: (_raw, _participantId) => ({
-        id:          'item-clip',
-        type:        'clip',
-        content:     { url: '/uploads/clip.mp4', duration: 0, mimeType: 'video/mp4', caption: null },
-        priority:    100,
-        status:      'pending',
-        submittedAt: Date.now(),
+        id:            'item-clip',
+        type:          'clip',
+        content:       { url: '/uploads/clip.mp4', duration: 0, mimeType: 'video/mp4', caption: null },
+        queuePosition: null,
+        status:        'pending',
+        submittedAt:   Date.now(),
         author: {
           participantId: fakeParticipant.id,
           displayName:   fakeParticipant.displayName,

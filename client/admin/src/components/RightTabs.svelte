@@ -1,12 +1,18 @@
 <script lang="ts">
   import PanicPanel from './PanicPanel.svelte';
   import ParticipantsPanel from './ParticipantsPanel.svelte';
+  import OnAirPanel from './OnAirPanel.svelte';
 
-  let active = $state<'panic' | 'participants'>('panic');
+  let active = $state<'onair' | 'panic' | 'participants'>('onair');
 </script>
 
 <div class="right-tabs">
   <div class="right-tabs__bar">
+    <button
+      class="right-tabs__tab"
+      class:right-tabs__tab--active={active === 'onair'}
+      onclick={() => (active = 'onair')}
+    >On Air</button>
     <button
       class="right-tabs__tab"
       class:right-tabs__tab--active={active === 'panic'}
@@ -20,6 +26,9 @@
   </div>
 
   <div class="right-tabs__content">
+    <div class="right-tabs__pane" class:right-tabs__pane--visible={active === 'onair'}>
+      <OnAirPanel />
+    </div>
     <div class="right-tabs__pane" class:right-tabs__pane--visible={active === 'panic'}>
       <PanicPanel />
     </div>

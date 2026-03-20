@@ -1,4 +1,4 @@
-import { eq, and, inArray, notInArray, gte, lte, max, count, sql, asc } from 'drizzle-orm';
+import { eq, and, inArray, notInArray, gte, lte, max, count, sql, asc, isNotNull } from 'drizzle-orm';
 import { db } from './index.js';
 import { mediaItems, mediaEvents, participants, broadcastEvents, scheduleEntries } from './schema.js';
 import type { MediaItem, MediaEvent, MediaStatus, MediaType, Participant, BroadcastEvent, ScheduleEntry, ScheduleEntryStatus } from '../../../shared/types.js';
@@ -10,6 +10,7 @@ export interface ReadyItemFilters {
   excludeTypes?:    MediaType[];
   submittedAfter?:  number;
   submittedBefore?: number;
+  positionedOnly?:  boolean; // only items with queue_position IS NOT NULL
 }
 
 export type ScoredRow = MediaItem & {
@@ -25,17 +26,17 @@ export interface AllItemsFilters {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function rowToMediaItem(row: {
-  id: string; type: string; content: unknown; priority: number;
+  id: string; type: string; content: unknown; queuePosition: number | null;
   status: string; submittedAt: number; authorId: string;
   authorDisplayName: string; authorTeam: string; authorRole: string;
 }): MediaItem {
   return {
-    id:          row.id,
-    type:        row.type        as MediaType,
-    content:     row.content     as MediaItem['content'],
-    priority:    row.priority,
-    status:      row.status      as MediaStatus,
-    submittedAt: row.submittedAt,
+    id:            row.id,
+    type:          row.type          as MediaType,
+    content:       row.content       as MediaItem['content'],
+    queuePosition: row.queuePosition ?? null,
+    status:        row.status        as MediaStatus,
+    submittedAt:   row.submittedAt,
     author: {
       participantId: row.authorId,
       displayName:   row.authorDisplayName,
@@ -63,15 +64,16 @@ function rowToParticipant(row: typeof participants.$inferSelect): Participant {
 
 // ─── media_items ──────────────────────────────────────────────────────────────
 
-export function insertItem(item: MediaItem): void {
+export function insertItem(item: MediaItem, priority: number): void {
   db.insert(mediaItems).values({
-    id:          item.id,
-    type:        item.type,
-    content:     item.content,
-    priority:    item.priority,
-    status:      item.status,
-    submittedAt: item.submittedAt,
-    authorId:    item.author.participantId,
+    id:            item.id,
+    type:          item.type,
+    content:       item.content,
+    priority,
+    status:        item.status,
+    submittedAt:   item.submittedAt,
+    authorId:      item.author.participantId,
+    queuePosition: item.queuePosition ?? undefined,
   }).run();
 }
 
@@ -80,7 +82,7 @@ export function getItemById(id: string): MediaItem | null {
     id:                mediaItems.id,
     type:              mediaItems.type,
     content:           mediaItems.content,
-    priority:          mediaItems.priority,
+    queuePosition:     mediaItems.queuePosition,
     status:            mediaItems.status,
     submittedAt:       mediaItems.submittedAt,
     authorId:          mediaItems.authorId,
@@ -108,6 +110,26 @@ export function updatePriority(id: string, priority: number): void {
   db.update(mediaItems).set({ priority }).where(eq(mediaItems.id, id)).run();
 }
 
+export function updateQueuePosition(id: string, queuePosition: number | null): void {
+  db.update(mediaItems).set({ queuePosition: queuePosition ?? undefined }).where(eq(mediaItems.id, id)).run();
+}
+
+export function getMaxQueuePosition(): number | null {
+  const row = db.select({ value: max(mediaItems.queuePosition) })
+    .from(mediaItems)
+    .where(eq(mediaItems.status, 'ready'))
+    .get();
+  return row?.value ?? null;
+}
+
+export function batchUpdateQueuePositions(updates: Array<{ id: string; queuePosition: number }>): void {
+  db.transaction(tx => {
+    for (const { id, queuePosition } of updates) {
+      tx.update(mediaItems).set({ queuePosition }).where(eq(mediaItems.id, id)).run();
+    }
+  });
+}
+
 export function updateSubmittedAt(id: string, submittedAt: number): void {
   db.update(mediaItems).set({ submittedAt }).where(eq(mediaItems.id, id)).run();
 }
@@ -119,12 +141,13 @@ export function getReadyItems(filters: ReadyItemFilters = {}): ScoredRow[] {
   if (filters.excludeTypes)    conditions.push(notInArray(mediaItems.type, filters.excludeTypes));
   if (filters.submittedAfter)  conditions.push(gte(mediaItems.submittedAt, filters.submittedAfter));
   if (filters.submittedBefore) conditions.push(lte(mediaItems.submittedAt, filters.submittedBefore));
+  if (filters.positionedOnly)  conditions.push(isNotNull(mediaItems.queuePosition));
 
   const rows = db.select({
     id:                mediaItems.id,
     type:              mediaItems.type,
     content:           mediaItems.content,
-    priority:          mediaItems.priority,
+    queuePosition:     mediaItems.queuePosition,
     status:            mediaItems.status,
     submittedAt:       mediaItems.submittedAt,
     authorId:          mediaItems.authorId,
@@ -151,7 +174,7 @@ export function getPlayedItems(): PlayedRow[] {
     id:                mediaItems.id,
     type:              mediaItems.type,
     content:           mediaItems.content,
-    priority:          mediaItems.priority,
+    queuePosition:     mediaItems.queuePosition,
     status:            mediaItems.status,
     submittedAt:       mediaItems.submittedAt,
     authorId:          mediaItems.authorId,
@@ -181,7 +204,7 @@ export function getAllItems(filters: AllItemsFilters = {}): MediaItem[] {
     id:                mediaItems.id,
     type:              mediaItems.type,
     content:           mediaItems.content,
-    priority:          mediaItems.priority,
+    queuePosition:     mediaItems.queuePosition,
     status:            mediaItems.status,
     submittedAt:       mediaItems.submittedAt,
     authorId:          mediaItems.authorId,

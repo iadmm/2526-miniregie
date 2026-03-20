@@ -9,6 +9,7 @@
   import RightTabs from './components/RightTabs.svelte';
   import SchedulePanel from './components/SchedulePanel.svelte';
   import JamControlPanel from './components/JamControlPanel.svelte';
+  import HealthPanel from './components/HealthPanel.svelte';
 
   onMount(checkSession);
 </script>
@@ -49,10 +50,7 @@
           </Pane>
           <PaneResizer />
           <Pane defaultSize={50} minSize={15}>
-            <div class="placeholder-panel">
-              <div class="panel-header"><span class="panel-label">Panel 5</span></div>
-              <div class="panel-body"></div>
-            </div>
+            <HealthPanel />
           </Pane>
         </PaneGroup>
       </Pane>
@@ -94,13 +92,6 @@
     flex-direction: column;
     height: 100%;
     overflow: hidden;
-  }
-
-  .placeholder-panel {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    background: var(--bg-panel);
   }
 
   :global([data-pane-resizer][data-direction="horizontal"]) {

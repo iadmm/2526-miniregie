@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import type { MediaContent, MediaType, MediaStatus, MediaEventType, BroadcastEventType, ScheduleEntryStatus } from '../../../shared/types.js';
+import type { MediaContent, MediaType, MediaStatus, MediaEventType, BroadcastEventType, ScheduleEntryStatus } from "@shared/types";
 
 export const participants = sqliteTable('participants', {
   id:           text('id').primaryKey(),       // uuid | 'system:admin'
@@ -17,13 +17,14 @@ export const participants = sqliteTable('participants', {
 });
 
 export const mediaItems = sqliteTable('media_items', {
-  id:          text('id').primaryKey(),
-  type:        text('type').notNull().$type<MediaType>(),
-  content:     text('content', { mode: 'json' }).notNull().$type<MediaContent>(),
-  priority:    integer('priority').notNull(),
-  status:      text('status').notNull().$type<MediaStatus>(),
-  submittedAt: integer('submitted_at').notNull(),
-  authorId:    text('author_id').notNull().references(() => participants.id),
+  id:            text('id').primaryKey(),
+  type:          text('type').notNull().$type<MediaType>(),
+  content:       text('content', { mode: 'json' }).notNull().$type<MediaContent>(),
+  priority:      integer('priority').notNull(), // internal ordering: pinned=999, interview=200, standard=100
+  status:        text('status').notNull().$type<MediaStatus>(),
+  submittedAt:   integer('submitted_at').notNull(),
+  authorId:      text('author_id').notNull().references(() => participants.id),
+  queuePosition: integer('queue_position'),     // explicit position in queue.main; null = pending or played
 });
 
 // Immutable event log — append only, never updated

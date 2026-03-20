@@ -1,14 +1,14 @@
 <script lang="ts">
   import { api } from '../lib/api.ts';
   import type {
-    ScoredMediaItem,
+    MediaItem,
     PhotoContent, GifContent, NoteContent, ClipContent,
     TickerContent, YoutubeContent, LinkContent, InterviewContent,
   } from '@shared/types';
   import DropdownMenu from './DropdownMenu.svelte';
 
   interface Props {
-    item: ScoredMediaItem;
+    item: MediaItem;
     activeIds: string[];
     onMutate: () => void;
     // Drag-and-drop
@@ -57,7 +57,7 @@
     | { kind: 'text'; text: string }
     | { kind: 'meta'; label: string; sub: string };
 
-  function getPreview(it: ScoredMediaItem): Preview {
+  function getPreview(it: MediaItem): Preview {
     const c = it.content;
     switch (it.type) {
       case 'photo':   { const p = c as PhotoContent;   return { kind: 'img',  url: p.url, caption: p.caption ?? '' }; }
@@ -87,7 +87,7 @@
 
   type Editable = { field: 'text' | 'caption'; value: string } | null;
 
-  function getEditable(it: ScoredMediaItem): Editable {
+  function getEditable(it: MediaItem): Editable {
     const c = it.content;
     if (it.type === 'note')   return { field: 'text', value: (c as NoteContent).text };
     if (it.type === 'ticker') return { field: 'text', value: (c as TickerContent).text };
@@ -213,7 +213,7 @@
           <span class="queue-item__caption">{preview.caption}</span>
         {/if}
         <span class="queue-item__footer">
-          {item.author.team} · {item.displayedCount}× · {timeAgo(item.submittedAt)}
+          {item.author.team} · {timeAgo(item.submittedAt)}
         </span>
       </div>
 
@@ -221,7 +221,7 @@
       <div class="queue-item__content">
         <span class="queue-item__text">{preview.text}</span>
         <span class="queue-item__footer">
-          {item.author.team} · {item.displayedCount}× · {timeAgo(item.submittedAt)}
+          {item.author.team} · {timeAgo(item.submittedAt)}
         </span>
       </div>
 
@@ -230,7 +230,7 @@
         <span class="queue-item__meta-label">{preview.label}</span>
         {#if preview.sub}<span class="queue-item__caption">{preview.sub}</span>{/if}
         <span class="queue-item__footer">
-          {item.author.team} · {item.displayedCount}× · {timeAgo(item.submittedAt)}
+          {item.author.team} · {timeAgo(item.submittedAt)}
         </span>
       </div>
     {/if}

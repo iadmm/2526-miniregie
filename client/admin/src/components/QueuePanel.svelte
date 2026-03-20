@@ -2,10 +2,10 @@
   import { onMount } from 'svelte';
   import { socket, socketState } from '../lib/socket.svelte.ts';
   import { api } from '../lib/api.ts';
-  import type { ScoredMediaItem } from '@shared/types';
+  import type { MediaItem } from '@shared/types';
   import QueueItem from './QueueItem.svelte';
 
-  let items    = $state<ScoredMediaItem[]>([]);
+  let items    = $state<MediaItem[]>([]);
   let loading  = $state(false);
   let updating = $state(false);
   let error    = $state<string | null>(null);
@@ -20,42 +20,23 @@
   // ─── Derived ─────────────────────────────────────────────────────────────────
 
   const activeIds = $derived(socketState.globalState?.broadcast.activeItemIds ?? []);
-  // FIFO: admin drag order (priority DESC), then submission order
-  const sorted    = $derived([...items].sort((a, b) =>
-    b.priority !== a.priority ? b.priority - a.priority : a.submittedAt - b.submittedAt,
-  ));
 
-  const displayItems = $derived((): ScoredMediaItem[] => {
+  // Items arrive pre-sorted by queuePosition from api.queue.main().
+  // displayItems applies the live drag preview on top of that order.
+  const displayItems = $derived((): MediaItem[] => {
     if (draggedId === null || dropTargetId === null || draggedId === dropTargetId) {
-      return sorted;
+      return items;
     }
-    const dragged = sorted.find(i => i.id === draggedId);
-    if (!dragged) return sorted;
-    const without   = sorted.filter(i => i.id !== draggedId);
+    const dragged = items.find(i => i.id === draggedId);
+    if (!dragged) return items;
+    const without   = items.filter(i => i.id !== draggedId);
     const targetIdx = without.findIndex(i => i.id === dropTargetId);
-    if (targetIdx === -1) return sorted;
+    if (targetIdx === -1) return items;
     const insertAt = dropBefore ? targetIdx : targetIdx + 1;
     const result = [...without];
     result.splice(insertAt, 0, dragged);
     return result;
   });
-
-  // ─── Priority assignment ──────────────────────────────────────────────────────
-  //
-  // Items get priorities spaced by STEP=1, descending from MAX=899 to BASE=100.
-  // Supports up to 799 drag-ordered slots.
-
-  const PRIORITY_MAX  = 899;
-  const PRIORITY_STEP = 1;
-  const PRIORITY_BASE = 100;
-
-  function computePriorityMap(ordered: ScoredMediaItem[]): Map<string, number> {
-    const map = new Map<string, number>();
-    ordered.forEach((item, idx) => {
-      map.set(item.id, Math.max(PRIORITY_BASE, PRIORITY_MAX - idx * PRIORITY_STEP));
-    });
-    return map;
-  }
 
   // ─── Data fetching ────────────────────────────────────────────────────────────
 
@@ -63,8 +44,7 @@
     loading = true;
     error = null;
     try {
-      const result = await api.items.list({ status: 'ready', scored: true });
-      items = result as ScoredMediaItem[];
+      items = await api.queue.main();
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'Failed to load queue';
     } finally {
@@ -97,18 +77,9 @@
     const newOrder = displayItems();
     resetDrag();
 
-    // Batch-update priorities for all items in the new order
-    const priorityMap = computePriorityMap(newOrder);
-    const updates = [...priorityMap.entries()].filter(([id, p]) => {
-      const current = items.find(i => i.id === id)?.priority;
-      return current !== p;
-    });
-
-    if (updates.length === 0) return;
-
     updating = true;
     try {
-      await Promise.all(updates.map(([id, priority]) => api.items.update(id, { priority })));
+      await api.queue.reorder(newOrder.map(i => i.id));
     } catch {
       // Best-effort — refresh anyway to get consistent state
     } finally {
@@ -133,8 +104,8 @@
       {#if loading || updating}
         <span class="queue-panel__loading">{updating ? 'saving…' : '…'}</span>
       {/if}
-      {#if sorted.length > 0}
-        <span class="queue-panel__count">{sorted.length}</span>
+      {#if items.length > 0}
+        <span class="queue-panel__count">{items.length}</span>
       {/if}
     </div>
   </div>
@@ -142,7 +113,7 @@
   <div class="queue-panel__body panel-body">
     {#if error}
       <div class="error-msg" style="margin:8px">{error}</div>
-    {:else if sorted.length === 0 && !loading}
+    {:else if items.length === 0 && !loading}
       <p class="queue-panel__empty">Queue is empty.</p>
     {:else}
       {#each displayItems() as item (item.id)}

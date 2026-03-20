@@ -46,7 +46,7 @@
     loading = true;
     error = null;
     try {
-      items = await api.items.listPlayed();
+      items = await api.queue.played();
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'Failed to load';
     } finally {
@@ -54,8 +54,8 @@
     }
   }
 
-  async function requeue(id: string) {
-    await api.items.requeue(id);
+  async function replay(id: string) {
+    await api.queue.replay(id);
     loadItems();
   }
 
@@ -95,8 +95,8 @@
             <span class="played-item__age">{timeAgo(item.playedAt)}</span>
           </div>
           <div class="played-item__label">{itemLabel(item)}</div>
-          <button class="played-item__requeue" onclick={() => requeue(item.id)}>
-            Re-queue
+          <button class="played-item__requeue" onclick={() => replay(item.id)}>
+            Remettre
           </button>
         </div>
       {/each}

@@ -196,19 +196,21 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
       return;
     }
 
+    // priority is DB-only: ticker=80, note=100. Passed to addDirectItem separately.
+    const itemPriority = type === "ticker" ? 80 : 100;
     const item: MediaItem = {
-      id:          randomUUID(),
+      id:            randomUUID(),
       type,
-      content:     type === "ticker"
+      content:       type === "ticker"
         ? { text: text.trim(), ...(typeof label === "string" && label.trim() ? { label: label.trim() } : {}) }
         : { text: text.trim() },
-      priority:    type === "ticker" ? 80 : 100,
-      status:      "ready",
-      submittedAt: Date.now(),
-      author:      ADMIN_AUTHOR,
+      queuePosition: null,
+      status:        "ready",
+      submittedAt:   Date.now(),
+      author:        ADMIN_AUTHOR,
     };
 
-    pool.addDirectItem(item);
+    pool.addDirectItem(item, itemPriority);
     res.status(201).json(item);
   });
 
