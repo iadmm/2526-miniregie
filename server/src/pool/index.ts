@@ -106,26 +106,6 @@ export class PoolManager extends EventEmitter {
       });
 
       updateContent(itemId, content);
-
-      // enrich-link-dedup: if resolved content has a URL already present in
-      // queue.main or queue.played, leave queuePosition = null (item sorts at
-      // the back of unpositioned items). Otherwise assign the next position so
-      // the item joins queue.main.
-      const url = (content as { url?: string }).url;
-      if (url) {
-        const mainItems   = getReadyItems({ positionedOnly: true });
-        const playedItems = getPlayedItems();
-        const isDupe =
-          mainItems.some(i => (i.content as { url?: string }).url === url) ||
-          playedItems.some(i => (i.content as { url?: string }).url === url);
-        if (!isDupe) {
-          updateQueuePosition(itemId, (getMaxQueuePosition() ?? 0) + 1);
-        }
-      } else {
-        // No URL (note, ticker, interview) — always assign next position
-        updateQueuePosition(itemId, (getMaxQueuePosition() ?? 0) + 1);
-      }
-
       updateStatus(itemId, 'ready');
 
       insertEvent({
@@ -184,9 +164,9 @@ export class PoolManager extends EventEmitter {
 
   // ─── Session-2 queue reads ──────────────────────────────────────────────────
 
-  // queue.main: ready items with an explicit position, sorted by that position.
+  // queue.main: all ready items, sorted by explicit position then submission time (FIFO).
   getMain(filters: GetMainFilters = {}): MediaItem[] {
-    const dbFilters: ReadyItemFilters = { positionedOnly: true };
+    const dbFilters: ReadyItemFilters = {};
     if (filters.types)        dbFilters.types        = filters.types;
     if (filters.excludeTypes) dbFilters.excludeTypes = filters.excludeTypes;
     return getReadyItems(dbFilters).sort(fifoSort);

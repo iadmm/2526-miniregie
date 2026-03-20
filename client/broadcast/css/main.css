@@ -1,7 +1,9 @@
 /* MiniRégie TV — broadcast SPA
-   TV reference: 1920×1080, safe area 5% on all sides
-   BEM naming throughout
-   Dark theme, system-ui font */
+   TV reference: 1920×1080, TV-safe area 5%
+   BEM naming throughout.
+   Aesthetic: Blackmagic/DaVinci Resolve — dark, no cheap gradients,
+   no opacity stacking, no decorative box-shadows.
+   Single explicit color for inactive states. */
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -15,23 +17,23 @@
   color: #fff;
 
   /* TV-safe area (5%) */
-  --safe: 5%;
   --safe-h: calc(100vh * 0.05);
   --safe-w: calc(100vw * 0.05);
 
   /* Palette */
   --color-bg:         #0a0a0a;
   --color-surface:    #181818;
-  --color-surface-2:  #242424;
-  --color-border:     rgba(255 255 255 / 0.12);
+  --color-border:     rgba(255 255 255 / 0.10);
   --color-accent:     #e8c640;
-  --color-panic:      #e03030;
-  --color-ticker-bg:  #111;
+  --color-inactive:   rgba(255 255 255 / 0.40);  /* single inactive tone */
+  --color-panic:      #dc2626;
+  --color-urgent:     #dc2626;
+  --color-note-bg:    #0c1420;   /* deep navy */
+  --color-caption-bg: rgba(0 0 0 / 0.82);
+  --color-ticker-bg:  #0d0d0d;
   --color-ticker-fg:  #e8c640;
-  --color-note-bg:    #1a1a2e;
-  --color-caption-bg: rgba(0 0 0 / 0.72);
 
-  /* Typography scale — TV-safe, legible from 3m */
+  /* Typography scale — legible at 3 m */
   --text-xs:   1.4rem;
   --text-sm:   1.8rem;
   --text-base: 2.4rem;
@@ -40,8 +42,8 @@
   --text-2xl:  7.2rem;
   --text-3xl:  11rem;
 
-  /* Transitions (non-critical animations only) */
-  --transition-layout: opacity 0.25s ease;
+  /* Clock / countdown monospace */
+  --font-clock: 'Commit Mono', 'Courier New', monospace;
 }
 
 body {
@@ -50,7 +52,7 @@ body {
   overflow: hidden;
 }
 
-/* ─── Root layers ─────────────────────────────────────────────────────────── */
+/* ─── Root layers ──────────────────────────────────────────────────────────── */
 
 #app-layer,
 #persistent-layer,
@@ -59,14 +61,8 @@ body {
   inset: 0;
 }
 
-#app-layer {
-  z-index: 1;
-}
-
-#persistent-layer {
-  z-index: 2;
-  pointer-events: none;
-}
+#app-layer      { z-index: 1; }
+#persistent-layer { z-index: 2; pointer-events: none; }
 
 #panic-layer {
   z-index: 9999;
@@ -86,7 +82,7 @@ body {
   text-transform: uppercase;
 }
 
-/* ─── Slots ───────────────────────────────────────────────────────────────── */
+/* ─── Slots ────────────────────────────────────────────────────────────────── */
 
 #slot-fg,
 #slot-bg {
@@ -94,11 +90,9 @@ body {
   inset: 0;
 }
 
-#slot-bg {
-  visibility: hidden;
-}
+#slot-bg { visibility: hidden; }
 
-/* ─── App base ────────────────────────────────────────────────────────────── */
+/* ─── App base ─────────────────────────────────────────────────────────────── */
 
 .app {
   position: absolute;
@@ -108,89 +102,104 @@ body {
   justify-content: center;
 }
 
-/* ─── Layout — app-layer classes ──────────────────────────────────────────── */
-
-/* jam-mode mounts into slotFg which has position:absolute inset:0.
-   Layout classes control how jam-slots are arranged inside. */
+/* ═══════════════════════════════════════════════════════════════════════════
+   JAM MODE
+   Internal DOM (z-index low → high inside .app--jam-mode):
+     .scene-layer        z:1  — media items + layout grid
+     .lower-third-layer  z:2  — attribution band + ticker
+     .clock-layer        z:3  — countdown (rises to z:10 at T-10min)
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 .app--jam-mode {
+  display: block; /* no centered-flex — layers handle their own positioning */
+}
+
+/* ── Layer stack ─────────────────────────────────────────────────────────── */
+
+.scene-layer,
+.lower-third-layer,
+.clock-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.scene-layer       { z-index: 1; }
+.lower-third-layer { z-index: 2; pointer-events: none; }
+.clock-layer       { z-index: 3; pointer-events: none; }
+
+/* T≤10min: clock rises above scene */
+.clock-layer--urgent { z-index: 10; }
+
+/* ── Layout classes (applied to .scene-layer) ────────────────────────────── */
+
+.scene-layer {
   display: grid;
-  padding: var(--safe-h) var(--safe-w);
+  /* Layout ratio transitions */
+  transition: grid-template-columns 300ms ease-in-out,
+              grid-template-rows    300ms ease-in-out;
 }
 
-/* IDLE — countdown only (persistent layer), no app content */
-.app--jam-mode.layout--idle {
-  /* Nothing visible in app-layer */
-}
+/* IDLE — nothing visible */
+.scene-layer.layout--idle { /* intentionally empty */ }
 
-/* MEDIA_FULL — youtube full screen */
-.app--jam-mode.layout--media-full {
-  grid-template-rows: 1fr;
+/* Single-item layouts */
+.scene-layer.layout--media-full,
+.scene-layer.layout--visual-full,
+.scene-layer.layout--note-card {
   grid-template-columns: 1fr;
+  grid-template-rows:    1fr;
 }
 
-/* VISUAL_FULL — photo/gif/clip/link(thumb) full screen */
-.app--jam-mode.layout--visual-full {
-  grid-template-rows: 1fr;
-  grid-template-columns: 1fr;
-}
-
-/* NOTE_CARD — centered card */
-.app--jam-mode.layout--note-card {
-  grid-template-rows: 1fr;
-  grid-template-columns: 1fr;
-}
-
-/* MEDIA_WITH_VISUAL — youtube 60% + visual 40% */
-.app--jam-mode.layout--media-with-visual {
+/* YouTube 60% left + companion visual 40% right */
+.scene-layer.layout--media-with-visual {
   grid-template-columns: 60fr 40fr;
-  grid-template-rows: 1fr;
+  grid-template-rows:    1fr;
 }
 
-/* MEDIA_WITH_CAPTION — youtube + caption band 25% bottom */
-.app--jam-mode.layout--media-with-caption {
+/* Primary 78% + caption band 22% */
+.scene-layer.layout--media-with-caption,
+.scene-layer.layout--visual-with-caption {
   grid-template-columns: 1fr;
-  grid-template-rows: 75fr 25fr;
+  grid-template-rows:    78fr 22fr;
 }
 
-/* MEDIA_WITH_VISUAL_AND_CAPTION — youtube 60% + visual 40% + caption band */
-.app--jam-mode.layout--media-with-visual-and-caption {
-  grid-template-columns: 60fr 40fr;
-  grid-template-rows: 80fr 20fr;
-}
-.app--jam-mode.layout--media-with-visual-and-caption .jam-slot--caption {
-  grid-column: 1 / -1;
-}
-
-/* VISUAL_WITH_CAPTION — visual + caption band 25% */
-.app--jam-mode.layout--visual-with-caption {
-  grid-template-columns: 1fr;
-  grid-template-rows: 75fr 25fr;
-}
-
-/* DUAL_VISUAL — two visuals side by side */
-.app--jam-mode.layout--dual-visual {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr;
-}
-
-/* ─── Jam slots ───────────────────────────────────────────────────────────── */
+/* ── Jam slots ───────────────────────────────────────────────────────────── */
 
 .jam-slot {
   position: relative;
   overflow: hidden;
   min-height: 0;
   min-width: 0;
+  animation: slot-appear 300ms ease-in-out;
 }
 
+@keyframes slot-appear {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Caption band slot */
 .jam-slot--caption {
   background: var(--color-caption-bg);
   display: flex;
   align-items: center;
-  padding: 1.5rem var(--safe-w);
+  padding: 0 var(--safe-w);
+  animation: caption-rise 300ms ease-out;
 }
 
-/* ─── Media items ─────────────────────────────────────────────────────────── */
+@keyframes caption-rise {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.jam-caption {
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: rgba(255 255 255 / 0.95);
+  width: 100%;
+}
+
+/* ── Media items ─────────────────────────────────────────────────────────── */
 
 .media-item {
   width: 100%;
@@ -202,16 +211,15 @@ body {
   position: relative;
 }
 
-/* Photo */
+/* Photo + GIF */
 .media-item--photo .media-item__image,
-.media-item--gif .media-item__image {
+.media-item--gif   .media-item__image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-/* Caption overlay on photo */
 .media-item__caption {
   position: absolute;
   bottom: 0;
@@ -235,27 +243,36 @@ body {
 .media-item--note {
   background: var(--color-note-bg);
   flex-direction: column;
-  gap: 2rem;
+  gap: 2.5rem;
   padding: var(--safe-h) var(--safe-w);
 }
 
 .media-item__note-text {
   font-size: var(--text-lg);
-  line-height: 1.5;
+  line-height: 1.55;
   text-align: center;
-  max-width: 80%;
+  max-width: 78%;
   font-style: italic;
+  color: rgba(255 255 255 / 0.96);
 }
 
 .media-item__author {
   font-size: var(--text-sm);
-  color: rgba(255 255 255 / 0.6);
+  color: var(--color-inactive);
+  font-style: normal;
+  letter-spacing: 0.04em;
+}
+
+/* NOTE_CARD layout: larger type, Commit Mono */
+.scene-layer.layout--note-card .media-item__note-text {
+  font-family: var(--font-clock);
+  font-size: var(--text-xl);
+  font-style: normal;
+  max-width: 82%;
 }
 
 /* YouTube */
-.media-item--youtube {
-  background: #000;
-}
+.media-item--youtube { background: #000; }
 
 .media-item__youtube {
   width: 100%;
@@ -274,9 +291,8 @@ body {
 
 .media-item--link .media-item__image {
   width: 100%;
-  height: 60%;
+  height: 55%;
   object-fit: cover;
-  border-radius: 0.4rem;
 }
 
 .media-item__link-meta {
@@ -293,7 +309,7 @@ body {
 
 .media-item__link-desc {
   font-size: var(--text-sm);
-  color: rgba(255 255 255 / 0.7);
+  color: rgba(255 255 255 / 0.65);
   line-height: 1.4;
 }
 
@@ -304,69 +320,62 @@ body {
   letter-spacing: 0.1em;
 }
 
-/* ─── Jam caption (slot caption content) ──────────────────────────────────── */
+/* ── Attribution band ────────────────────────────────────────────────────── */
+/* Slide-in from below → hold ATTRIBUTION_HOLD ms → slide-out below.
+   Class transitions drive animation (LowerThirdEngine triggers them). */
 
-.jam-caption {
-  font-size: var(--text-base);
-  line-height: 1.5;
-  color: rgba(255 255 255 / 0.95);
-  width: 100%;
+.attribution-band {
+  position: absolute;
+  bottom: 10vh;   /* sits above ticker */
+  left: 0;
+  padding: 1.4rem var(--safe-w) 1.6rem calc(var(--safe-w) + 0.4rem);
+  background: rgba(0 0 0 / 0.84);
+  border-left: 3px solid var(--color-accent);
+  max-width: 52%;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ─── Persistent layer ────────────────────────────────────────────────────── */
+/* Hidden: snapped below — no transition (instant reset) */
+.attribution-band--hidden {
+  transform: translateY(calc(100% + 12vh));
+  transition: none;
+}
 
-/* Countdown */
-.countdown {
-  position: absolute;
-  font-variant-numeric: tabular-nums;
+/* Visible: slides in */
+.attribution-band--in {
+  transform: translateY(0);
+}
+
+/* Exiting: slides back below */
+.attribution-band--out {
+  transform: translateY(calc(100% + 12vh));
+  transition: transform 0.35s cubic-bezier(0.55, 0, 1, 0.45);
+}
+
+.attribution-band__name {
+  font-size: var(--text-base);
   font-weight: 700;
-  transition: font-size 0.5s ease, top 0.5s ease, right 0.5s ease;
-  z-index: 10;
-}
-
-.countdown--compact {
-  top: var(--safe-h);
-  right: var(--safe-w);
-  font-size: var(--text-base);
-  color: rgba(255 255 255 / 0.8);
-}
-
-.countdown--large {
-  top: var(--safe-h);
-  right: var(--safe-w);
-  font-size: var(--text-xl);
   color: #fff;
-  text-shadow: 0 0 20px rgba(232 198 64 / 0.5);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.countdown--fullscreen {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: var(--text-3xl);
-  color: var(--color-panic);
-  text-shadow: 0 0 40px rgba(224 48 48 / 0.7);
-}
-
-/* QR block */
-.qr-block {
-  position: absolute;
-  bottom: var(--safe-h);
-  right: var(--safe-w);
-  background: rgba(0 0 0 / 0.6);
-  padding: 0.8rem 1.2rem;
-  border-radius: 0.4rem;
-  border: 1px solid var(--color-border);
-}
-
-.qr-block__url {
+.attribution-band__meta {
   font-size: var(--text-sm);
-  color: var(--color-accent);
-  font-weight: 600;
+  color: var(--color-inactive);
+  margin-top: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Ticker */
-.ticker-bar {
+/* ── Ticker band ─────────────────────────────────────────────────────────── */
+/* Round-robin over items of type 'ticker' from queue.main.
+   CSS scroll animation only — no JS timing. animationend fires next item. */
+
+.ticker-band {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -379,27 +388,54 @@ body {
   overflow: hidden;
 }
 
-.ticker-bar__label {
+/* Breaking news: taller band, urgent colors */
+.ticker-band--breaking {
+  height: 15vh;
+  background: #160000;
+  border-top-color: var(--color-urgent);
+  animation: breaking-in 0.3s ease-out;
+}
+
+@keyframes breaking-in {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.ticker-band__label {
   flex-shrink: 0;
-  padding: 0 1.5rem;
-  font-family: monospace;
-  font-size: var(--text-sm);
-  color: var(--color-ticker-fg);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  border-right: 1px solid var(--color-border);
+  padding: 0 1.6rem;
   height: 100%;
   display: flex;
   align-items: center;
+  font-family: var(--font-clock);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-ticker-fg);
+  border-right: 1px solid var(--color-border);
 }
 
-.ticker-content {
+.ticker-band--breaking .ticker-band__label {
+  font-size: var(--text-base);
+  color: var(--color-urgent);
+}
+
+/* Content scrolls right → left via CSS animation.
+   padding-left: 100vw ensures it starts off right edge.
+   Element is replaced (cloneNode) on animationend to trigger next item. */
+.ticker-band__content {
   display: inline-block;
   white-space: nowrap;
-  padding-left: 100%;
+  padding-left: 100vw;
   font-size: var(--text-sm);
   color: #fff;
-  animation: ticker-scroll 20s linear forwards;
+  animation: ticker-scroll 28s linear forwards;
+}
+
+.ticker-band--breaking .ticker-band__content {
+  font-size: var(--text-base);
+  font-weight: 500;
+  animation-duration: 34s;
 }
 
 @keyframes ticker-scroll {
@@ -407,7 +443,113 @@ body {
   to   { transform: translateX(-200%); }
 }
 
-/* ─── Pre-jam idle ─────────────────────────────────────────────────────────── */
+/* ── Clock engine ────────────────────────────────────────────────────────── */
+/* Driven by server 'tick' events. Modes set by ClockEngine via classList. */
+
+.clock {
+  position: absolute;
+  font-family: var(--font-clock);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition: font-size  0.6s ease,
+              top        0.6s ease,
+              right      0.6s ease,
+              left       0.6s ease,
+              bottom     0.6s ease,
+              color      0.6s ease;
+}
+
+/* T > 2h — compact badge, top-right */
+.clock--compact {
+  top:   var(--safe-h);
+  right: var(--safe-w);
+  font-size: var(--text-sm);
+  color: var(--color-inactive);
+}
+
+/* T ≤ 2h — growing, top-right */
+.clock--large {
+  top:   var(--safe-h);
+  right: var(--safe-w);
+  font-size: var(--text-base);
+  color: rgba(255 255 255 / 0.80);
+}
+
+/* T ≤ 1h — dominant (~30% screen height), Commit Mono */
+.clock--dominant {
+  top:   var(--safe-h);
+  right: var(--safe-w);
+  font-size: var(--text-2xl);
+  color: #fff;
+}
+
+/* T ≤ 10min — fullscreen urgent red */
+.clock--fullscreen {
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-3xl);
+  color: #fff;
+  background: var(--color-urgent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PERSISTENT LAYER (QR code — used by pre-jam, countdown-to-jam apps)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.qr-block {
+  position: absolute;
+  bottom: var(--safe-h);
+  right: var(--safe-w);
+  background: rgba(0 0 0 / 0.60);
+  padding: 0.8rem 1.2rem;
+  border: 1px solid var(--color-border);
+}
+
+.qr-block__url {
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* Countdown (persistent layer — used before JAM) */
+.countdown {
+  position: absolute;
+  font-family: var(--font-clock);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  transition: font-size 0.5s ease, top 0.5s ease, right 0.5s ease;
+}
+
+.countdown--compact {
+  top: var(--safe-h);
+  right: var(--safe-w);
+  font-size: var(--text-base);
+  color: var(--color-inactive);
+}
+
+.countdown--large {
+  top: var(--safe-h);
+  right: var(--safe-w);
+  font-size: var(--text-xl);
+  color: #fff;
+}
+
+.countdown--fullscreen {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: var(--text-3xl);
+  color: var(--color-panic);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OTHER APPS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Pre-jam idle ──────────────────────────────────────────────────────────── */
 
 .app--pre-jam-idle {
   flex-direction: column;
@@ -430,12 +572,13 @@ body {
 }
 
 .pre-jam-idle__clock {
+  font-family: var(--font-clock);
   font-size: var(--text-xl);
   font-variant-numeric: tabular-nums;
-  color: rgba(255 255 255 / 0.6);
+  color: var(--color-inactive);
 }
 
-/* ─── Countdown to JAM ─────────────────────────────────────────────────────── */
+/* ── Countdown to JAM ──────────────────────────────────────────────────────── */
 
 .app--countdown-to-jam {
   flex-direction: column;
@@ -451,20 +594,20 @@ body {
 
 .countdown-to-jam__label {
   font-size: var(--text-lg);
-  color: rgba(255 255 255 / 0.6);
+  color: var(--color-inactive);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
 .countdown-to-jam__display {
+  font-family: var(--font-clock);
   font-size: var(--text-3xl);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--color-accent);
-  text-shadow: 0 0 60px rgba(232 198 64 / 0.4);
 }
 
-/* ─── End of countdown ─────────────────────────────────────────────────────── */
+/* ── End of countdown ──────────────────────────────────────────────────────── */
 
 .app--end-of-countdown {
   flex-direction: column;
@@ -494,10 +637,10 @@ body {
 
 .end-of-countdown__stat {
   font-size: var(--text-base);
-  color: rgba(255 255 255 / 0.7);
+  color: var(--color-inactive);
 }
 
-/* ─── Post-jam idle ─────────────────────────────────────────────────────────── */
+/* ── Post-jam idle ─────────────────────────────────────────────────────────── */
 
 .app--post-jam-idle {
   flex-direction: column;
@@ -516,19 +659,17 @@ body {
 .post-jam-idle__title {
   font-size: var(--text-xl);
   font-weight: 700;
-  color: rgba(255 255 255 / 0.9);
+  color: rgba(255 255 255 / 0.90);
 }
 
 .post-jam-idle__subtitle {
   font-size: var(--text-base);
-  color: rgba(255 255 255 / 0.5);
+  color: var(--color-inactive);
 }
 
-/* ─── Micro-trottoir ─────────────────────────────────────────────────────────── */
+/* ── Micro-trottoir ────────────────────────────────────────────────────────── */
 
-.app--micro-trottoir {
-  background: var(--color-bg);
-}
+.app--micro-trottoir { background: var(--color-bg); }
 
 .micro-trottoir {
   position: absolute;
@@ -540,7 +681,6 @@ body {
   padding: var(--safe-h) var(--safe-w);
 }
 
-/* Intro / Outro */
 .micro-trottoir--intro,
 .micro-trottoir--outro {
   background: #0a0a0a;
@@ -557,20 +697,17 @@ body {
 
 .micro-trottoir__intro-sub {
   font-size: var(--text-base);
-  color: rgba(255 255 255 / 0.6);
+  color: var(--color-inactive);
   letter-spacing: 0.08em;
 }
 
 .micro-trottoir__outro-label {
   font-size: var(--text-lg);
-  color: rgba(255 255 255 / 0.7);
+  color: var(--color-inactive);
   font-style: italic;
 }
 
-/* Question card */
-.micro-trottoir--question {
-  background: var(--color-surface);
-}
+.micro-trottoir--question { background: var(--color-surface); }
 
 .micro-trottoir__question-text {
   font-size: var(--text-xl);
@@ -581,7 +718,6 @@ body {
   color: #fff;
 }
 
-/* Answer — video */
 .micro-trottoir--answer {
   background: #000;
   position: relative;
@@ -597,10 +733,7 @@ body {
   object-fit: cover;
 }
 
-/* Answer — text */
-.micro-trottoir--text {
-  background: var(--color-note-bg);
-}
+.micro-trottoir--text { background: var(--color-note-bg); }
 
 .micro-trottoir__answer-text {
   font-size: var(--text-lg);
@@ -610,7 +743,6 @@ body {
   font-style: italic;
 }
 
-/* Photo */
 .micro-trottoir--photo {
   background: #000;
   position: relative;
@@ -626,14 +758,14 @@ body {
   object-fit: cover;
 }
 
-/* Bandeau — bottom name bar */
+/* Name bar — bottom of video/photo frames */
 .micro-trottoir__bandeau {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 1.5rem var(--safe-w);
-  background: linear-gradient(to top, rgba(0 0 0 / 0.85), transparent);
+  padding: 2rem var(--safe-w) 1.5rem;
+  background: rgba(0 0 0 / 0.70);
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -647,6 +779,6 @@ body {
 
 .micro-trottoir__bandeau-meta {
   font-size: var(--text-sm);
-  color: rgba(255 255 255 / 0.7);
+  color: var(--color-inactive);
   font-style: italic;
 }
