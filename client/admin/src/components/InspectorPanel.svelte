@@ -1,7 +1,15 @@
 <script lang="ts">
   import { Tabs } from 'bits-ui';
-  import PanicTab    from './inspector/PanicTab.svelte';
-  import SettingsTab from './inspector/SettingsTab.svelte';
+  import type { Participant } from '@shared/types';
+  import PanicTab        from './inspector/PanicTab.svelte';
+  import SettingsTab     from './inspector/SettingsTab.svelte';
+  import ParticipantsTab from './inspector/ParticipantsTab.svelte';
+
+  interface Props {
+    me: Participant;
+  }
+
+  const { me }: Props = $props();
 </script>
 
 <div class="inspector">
@@ -11,12 +19,14 @@
 
   <Tabs.Root value="panic" class="tabs-root">
     <Tabs.List class="tabs-list">
-      <Tabs.Trigger value="panic"    class="tab-trigger panic-tab">Panic</Tabs.Trigger>
-      <Tabs.Trigger value="settings" class="tab-trigger">Paramètres</Tabs.Trigger>
+      <Tabs.Trigger value="panic"        class="tab-trigger panic-tab">Panic</Tabs.Trigger>
+      <Tabs.Trigger value="participants" class="tab-trigger">Participants</Tabs.Trigger>
+      <Tabs.Trigger value="settings"     class="tab-trigger">Paramètres</Tabs.Trigger>
     </Tabs.List>
 
-    <Tabs.Content value="panic"    class="tab-content"><PanicTab    /></Tabs.Content>
-    <Tabs.Content value="settings" class="tab-content"><SettingsTab /></Tabs.Content>
+    <Tabs.Content value="panic"        class="tab-content"><PanicTab /></Tabs.Content>
+    <Tabs.Content value="participants" class="tab-content"><ParticipantsTab {me} /></Tabs.Content>
+    <Tabs.Content value="settings"     class="tab-content"><SettingsTab /></Tabs.Content>
   </Tabs.Root>
 </div>
 

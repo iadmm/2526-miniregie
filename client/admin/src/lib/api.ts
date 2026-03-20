@@ -99,6 +99,13 @@ export const api = {
       return request(`/api/participants${qs ? `?${qs}` : ''}`);
     },
 
+    setAdmin(id: string, admin: boolean): Promise<{ ok: boolean }> {
+      return request(`/api/participants/${encodeURIComponent(id)}/role`, {
+        method: 'PATCH',
+        body: JSON.stringify({ admin }),
+      });
+    },
+
     ban(id: string, reason?: string): Promise<{ ok: boolean }> {
       return request(`/api/participants/${encodeURIComponent(id)}/ban`, {
         method: 'POST',

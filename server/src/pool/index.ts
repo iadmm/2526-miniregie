@@ -5,7 +5,7 @@ import { sanitize } from './sanitize.js';
 import { guard } from './guard.js';
 import {
   insertItem, updateStatus, updateContent, updatePriority, updatePinned, clearAllPinned,
-  getReadyItems, getLastSubmissionAt, getClipCount, insertEvent,
+  getReadyItems, getItemById, getLastSubmissionAt, getClipCount, insertEvent,
   type ReadyItemFilters, type ScoredRow,
 } from '../db/queries.js';
 import type { GlobalState, MediaItem, MediaType, ScoredMediaItem } from '../../../shared/types.js';
@@ -312,14 +312,17 @@ export class PoolManager extends EventEmitter {
   // ─── Write (called by apps) ─────────────────────────────────────────────────
 
   markDisplayed(itemId: string, appId: string): void {
-    const item = this.getReady(itemId);
+    // Use getItemById (any status) — item may have been evicted by admin while on screen
+    const item = getItemById(itemId);
+    if (!item) return; // item deleted entirely, nothing to record
+
     insertEvent({ id: randomUUID(), itemId, type: 'displayed', appId, payload: null, createdAt: Date.now() });
 
     // Track author for display cooldown
     this.recentDisplayedAuthors.set(item.author.participantId, Date.now());
 
-    // Auto-evict after display if pinned
-    if (item.pinned) this.evict(itemId, 'post-pin');
+    // Auto-evict after display if pinned and still ready
+    if (item.pinned && item.status === 'ready') this.evict(itemId, 'post-pin');
 
     this.emit('update');
   }
@@ -376,10 +379,4 @@ export class PoolManager extends EventEmitter {
     return counts;
   }
 
-  private getReady(itemId: string): MediaItem {
-    const rows = getReadyItems();
-    const row = rows.find(r => r.id === itemId);
-    if (!row) throw new Error(`Item ${itemId} not found or not ready`);
-    return row;
-  }
 }

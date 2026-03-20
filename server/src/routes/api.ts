@@ -9,6 +9,7 @@ import {
   searchParticipants,
   setBanned,
   getParticipantById,
+  setParticipantRole,
 } from "../db/queries.js";
 import type { MediaStatus, AppId, MediaItem, JamConfig, AuthorStats } from "../../../shared/types.js";
 import type { BroadcastManager } from "../broadcast/index.js";
@@ -256,6 +257,35 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
       typeof q === "string" && q.length > 0 ? q : undefined,
     );
     res.json(results);
+  });
+
+  router.patch("/participants/:id/role", (req, res) => {
+    const { id } = req.params as { id: string };
+    const { admin } = req.body as { admin?: unknown };
+
+    if (typeof admin !== "boolean") {
+      res.status(400).json({ error: "admin must be a boolean" });
+      return;
+    }
+
+    if (id.startsWith("system:")) {
+      res.status(400).json({ error: "Cannot modify system accounts" });
+      return;
+    }
+
+    if (!admin && req.participant!.id === id) {
+      res.status(403).json({ error: "Cannot remove your own admin privileges" });
+      return;
+    }
+
+    const participant = getParticipantById(id);
+    if (!participant) {
+      res.status(404).json({ error: "Participant not found" });
+      return;
+    }
+
+    setParticipantRole(id, admin ? "admin" : "participant");
+    res.json({ ok: true });
   });
 
   router.post("/participants/:id/ban", (req, res) => {

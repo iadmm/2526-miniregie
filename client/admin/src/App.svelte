@@ -68,7 +68,7 @@
             </Pane>
             <PaneResizer class="resizer resizer-v" />
             <Pane defaultSize={34} minSize={18} class="pane-cell">
-              <InspectorPanel />
+              <InspectorPanel {me} />
             </Pane>
           </PaneGroup>
         </Pane>

@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { ScheduleEntry } from '../../../shared/types.js';
+import type { ScheduleEntry } from "@shared/types";
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 

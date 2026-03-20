@@ -288,6 +288,10 @@ export function setBanned(id: string, banned: boolean, bannedAt: number | null, 
   db.update(participants).set({ banned, bannedAt, banReason }).where(eq(participants.id, id)).run();
 }
 
+export function setParticipantRole(id: string, role: string): void {
+  db.update(participants).set({ role }).where(eq(participants.id, id)).run();
+}
+
 export function searchParticipants(query?: string): Participant[] {
   const rows = query
     ? db.select().from(participants)
