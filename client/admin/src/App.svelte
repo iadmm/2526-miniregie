@@ -7,6 +7,7 @@
   import SourcePanel    from './components/SourcePanel.svelte';
   import EditTimeline   from './components/EditTimeline.svelte';
   import InspectorPanel from './components/InspectorPanel.svelte';
+  import OnAirPanel    from './components/OnAirPanel.svelte';
 
   type View = 'loading' | 'login' | 'dashboard';
 
@@ -52,6 +53,8 @@
 {:else if view === 'dashboard' && me}
   <div class="workspace">
     <TopBar {me} onLogout={handleLogout} />
+
+    <OnAirPanel />
 
     <div class="body">
       <!-- Main zone: Queue / Timeline tabs -->
