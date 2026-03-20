@@ -22,6 +22,27 @@
   let loading      = $state<string | null>(null); // which action is in flight
   let error        = $state<string | null>(null);
 
+  // Panic message — synced from server, editable at any time
+  let panicMessage  = $state('');
+  let messageEditing = $state(false);
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Sync from server when not actively editing
+  $effect(() => {
+    if (!messageEditing) {
+      panicMessage = broadcast?.panicMessage ?? '';
+    }
+  });
+
+  function onMessageInput(e: Event): void {
+    panicMessage = (e.target as HTMLTextAreaElement).value;
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      try { await api.jam.updateMessage(panicMessage); } catch { /* silent */ }
+      saveTimer = null;
+    }, 600);
+  }
+
   async function run(key: string, fn: () => Promise<unknown>): Promise<void> {
     loading = key;
     error   = null;
@@ -36,6 +57,20 @@
 </script>
 
 <div class="panic-body">
+
+  <!-- ── Panic message ─────────────────────────────────────────────────── -->
+  <section class="section">
+    <div class="section-title">Message panic (TV)</div>
+    <textarea
+      class="message-input"
+      placeholder="Interlude technique, veuillez patienter…"
+      value={panicMessage}
+      oninput={onMessageInput}
+      onfocus={() => { messageEditing = true; }}
+      onblur={() => { messageEditing = false; }}
+      rows="3"
+    ></textarea>
+  </section>
 
   <!-- ── Panic ─────────────────────────────────────────────────────────── -->
   <section class="section" class:section-alert={panicState}>
@@ -244,4 +279,22 @@
   }
 
   .mono { font-family: var(--font-mono), monospace; }
+
+  .message-input {
+    width: 100%;
+    resize: vertical;
+    background: var(--bg-input, #1a1a1a);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 11px;
+    font-family: var(--font), sans-serif;
+    padding: 6px 8px;
+    line-height: 1.5;
+    box-sizing: border-box;
+  }
+  .message-input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
 </style>

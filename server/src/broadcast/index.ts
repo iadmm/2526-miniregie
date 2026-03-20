@@ -15,8 +15,10 @@ import { getJamConfig } from '../jam-config.js';
 type DbLimitTrigger = LimitTrigger & { dbId: number };
 
 interface PersistedState {
-  jam:       GlobalState['jam'];
-  activeApp: AppId;
+  jam:          GlobalState['jam'];
+  activeApp:    AppId;
+  panicState:   boolean;
+  panicMessage: string;
 }
 
 const STATE_FILE = 'state.json';
@@ -152,6 +154,11 @@ export class BroadcastManager {
     this.dispatch({ type: 'market', appId: resumeAppId, source: 'admin' });
   }
 
+  setPanicMessage(message: string): void {
+    this.state.broadcast.panicMessage = message;
+    this.emitState();
+  }
+
   /**
    * Called by the broadcast client's jam-mode app whenever its active items or
    * regime change.  Updates the shared GlobalState so the admin UI can observe
@@ -177,7 +184,7 @@ export class BroadcastManager {
     // Reset JAM state machine
     this.holdCount       = 0;
     this.state.jam       = { status: 'idle', startedAt: null, endsAt: null, timeRemaining: null };
-    this.state.broadcast = { activeApp: 'pre-jam-idle', transition: 'idle', panicState: false, nextTriggerAt: null, activeItemIds: [], regime: 'normal' };
+    this.state.broadcast = { activeApp: 'pre-jam-idle', transition: 'idle', panicState: false, panicMessage: '', nextTriggerAt: null, activeItemIds: [], regime: 'normal' };
 
     // Reset all schedule entries in DB and reload so triggers can fire again
     resetScheduleStatus();
@@ -334,7 +341,7 @@ export class BroadcastManager {
 
         return {
           jam:       persisted.jam,
-          broadcast: { activeApp: persisted.activeApp, transition: 'idle', panicState: false, nextTriggerAt: null, activeItemIds: [], regime: 'normal' },
+          broadcast: { activeApp: persisted.activeApp, transition: 'idle', panicState: persisted.panicState ?? false, panicMessage: persisted.panicMessage ?? '', nextTriggerAt: null, activeItemIds: [], regime: 'normal' },
           pool:      { total: 0, fresh: 0, queueSnapshot: [], byType: {}, pinned: 0, scoreMax: null, scoreMin: null, holdCount: 0 },
         };
       }
@@ -344,7 +351,7 @@ export class BroadcastManager {
 
     return {
       jam:       { status: 'idle', startedAt: null, endsAt: null, timeRemaining: null },
-      broadcast: { activeApp: 'pre-jam-idle', transition: 'idle', panicState: false, nextTriggerAt: null, activeItemIds: [], regime: 'normal' },
+      broadcast: { activeApp: 'pre-jam-idle', transition: 'idle', panicState: false, panicMessage: '', nextTriggerAt: null, activeItemIds: [], regime: 'normal' },
       pool:      { total: 0, fresh: 0, queueSnapshot: [], byType: {}, pinned: 0, scoreMax: null, scoreMin: null, holdCount: 0 },
     };
   }
@@ -352,8 +359,10 @@ export class BroadcastManager {
   private persist(): void {
     // Schedule fired state is authoritative in DB — not persisted in state.json.
     const data: PersistedState = {
-      jam:       this.state.jam,
-      activeApp: this.state.broadcast.activeApp,
+      jam:          this.state.jam,
+      activeApp:    this.state.broadcast.activeApp,
+      panicState:   this.state.broadcast.panicState,
+      panicMessage: this.state.broadcast.panicMessage,
     };
     const json = JSON.stringify(data, null, 2);
     const tmp  = `${STATE_FILE}.tmp`;

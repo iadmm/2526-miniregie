@@ -79,6 +79,13 @@ export const api = {
       return request('/api/jam/panic', { method: 'POST' });
     },
 
+    updateMessage(message: string): Promise<{ ok: boolean }> {
+      return request('/api/jam/panic', {
+        method: 'PATCH',
+        body: JSON.stringify({ message }),
+      });
+    },
+
     clearPanic(resumeAppId: AppId): Promise<{ ok: boolean }> {
       return request('/api/jam/panic', {
         method: 'DELETE',
@@ -201,6 +208,19 @@ export const api = {
     delete(id: string): Promise<{ ok: boolean }> {
       return request(`/api/items/${encodeURIComponent(id)}`, {
         method: 'DELETE',
+      });
+    },
+
+    skip(id: string): Promise<{ ok: boolean }> {
+      return request(`/api/items/${encodeURIComponent(id)}/skip`, {
+        method: 'POST',
+      });
+    },
+
+    update(id: string, patch: { priority?: number; caption?: string; text?: string }): Promise<{ ok: boolean }> {
+      return request(`/api/items/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(patch),
       });
     },
   },

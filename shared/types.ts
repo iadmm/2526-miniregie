@@ -122,6 +122,7 @@ export interface GlobalState {
     activeApp:     AppId;
     transition:    'idle' | 'in_progress';
     panicState:    boolean;
+    panicMessage:  string;        // message shown on TV panic overlay
     nextTriggerAt: number | null; // absolute ms of next unfired schedule trigger
     activeItemIds: string[];      // IDs of items currently displayed by jam-mode (0-3)
     regime:        'normal' | 'hold' | 'buffer'; // jam-mode fetch pipeline state

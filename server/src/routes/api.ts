@@ -5,7 +5,10 @@ import {
   getAllItems,
   updateStatus,
   updatePinned,
+  updatePriority,
+  updateContent,
   deleteItem,
+  getItemById,
   searchParticipants,
   setBanned,
   getParticipantById,
@@ -59,6 +62,16 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
 
   router.post("/jam/panic", (_req, res) => {
     broadcast.panic("manual");
+    res.json({ ok: true });
+  });
+
+  router.patch("/jam/panic", (req, res) => {
+    const { message } = req.body as { message?: unknown };
+    if (typeof message !== "string") {
+      res.status(400).json({ error: "message must be a string" });
+      return;
+    }
+    broadcast.setPanicMessage(message);
     res.json({ ok: true });
   });
 
@@ -208,6 +221,48 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
   router.delete("/items/:id", (req, res) => {
     const { id } = req.params as { id: string };
     deleteItem(id);
+    res.json({ ok: true });
+  });
+
+  router.post("/items/:id/skip", (req, res) => {
+    const { id } = req.params as { id: string };
+    pool.markSkipped(id, "admin");
+    res.json({ ok: true });
+  });
+
+  router.patch("/items/:id", (req, res) => {
+    const { id } = req.params as { id: string };
+    const { priority, caption, text } = req.body as {
+      priority?: unknown;
+      caption?: unknown;
+      text?: unknown;
+    };
+
+    const item = getItemById(id);
+    if (!item) {
+      res.status(404).json({ error: "Item not found" });
+      return;
+    }
+
+    if (priority !== undefined) {
+      if (typeof priority !== "number" || priority < 0 || priority > 999) {
+        res.status(400).json({ error: "priority must be a number between 0 and 999" });
+        return;
+      }
+      updatePriority(id, priority);
+    }
+
+    if (caption !== undefined || text !== undefined) {
+      const content = { ...item.content } as Record<string, unknown>;
+      if (typeof caption === "string" && "caption" in content) {
+        content.caption = caption.trim() || null;
+      }
+      if (typeof text === "string" && "text" in content) {
+        content.text = text;
+      }
+      updateContent(id, content as MediaItem["content"]);
+    }
+
     res.json({ ok: true });
   });
 
