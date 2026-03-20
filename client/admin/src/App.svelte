@@ -6,6 +6,9 @@
   import TopBar from './components/TopBar.svelte';
   import ProgramMonitor from './components/ProgramMonitor.svelte';
   import QueueTabs from './components/QueueTabs.svelte';
+  import RightTabs from './components/RightTabs.svelte';
+  import SchedulePanel from './components/SchedulePanel.svelte';
+  import JamControlPanel from './components/JamControlPanel.svelte';
 
   onMount(checkSession);
 </script>
@@ -21,7 +24,10 @@
       <Pane defaultSize={60} minSize={20}>
         <PaneGroup direction="horizontal" autoSaveId="admin-row1">
           <Pane defaultSize={33} minSize={10}>
-            <ProgramMonitor />
+            <div class="monitor-col">
+              <ProgramMonitor />
+              <JamControlPanel />
+            </div>
           </Pane>
           <PaneResizer />
           <Pane defaultSize={34} minSize={10}>
@@ -29,7 +35,7 @@
           </Pane>
           <PaneResizer />
           <Pane defaultSize={33} minSize={10}>
-
+            <RightTabs />
           </Pane>
         </PaneGroup>
       </Pane>
@@ -39,10 +45,7 @@
       <Pane defaultSize={40} minSize={15}>
         <PaneGroup direction="horizontal" autoSaveId="admin-row2">
           <Pane defaultSize={50} minSize={15}>
-            <div class="placeholder-panel">
-              <div class="panel-header"><span class="panel-label">Panel 4</span></div>
-              <div class="panel-body"></div>
-            </div>
+            <SchedulePanel />
           </Pane>
           <PaneResizer />
           <Pane defaultSize={50} minSize={15}>
@@ -84,6 +87,13 @@
   :global([data-pane] > [data-pane-group]) {
     width: 100%;
     height: 100%;
+  }
+
+  .monitor-col {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
   }
 
   .placeholder-panel {

@@ -12,6 +12,10 @@ import {
   setBanned,
   getParticipantById,
   setParticipantRole,
+  getScheduleEntries,
+  insertScheduleEntry,
+  updateScheduleEntry,
+  deleteScheduleEntry,
 } from "../db/queries.js";
 import type { MediaStatus, AppId, MediaItem, JamConfig, AuthorStats } from "@shared/types";
 import type { BroadcastManager } from "../broadcast";
@@ -114,6 +118,54 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
 
   router.get("/broadcast/schedule", (_req, res) => {
     res.json(broadcast.getSchedule());
+  });
+
+  // ─── Schedule CRUD ────────────────────────────────────────────────────────────
+
+  router.get("/schedule", (_req, res) => {
+    res.json(getScheduleEntries());
+  });
+
+  router.post("/schedule", (req, res) => {
+    const { at, app, label } = req.body as { at?: unknown; app?: unknown; label?: unknown };
+    if (typeof at !== "string" || at.trim().length === 0) {
+      res.status(400).json({ error: "at is required" });
+      return;
+    }
+    if (typeof app !== "string" || app.trim().length === 0) {
+      res.status(400).json({ error: "app is required" });
+      return;
+    }
+    const entry = insertScheduleEntry(at.trim(), app.trim(), typeof label === "string" ? label.trim() || undefined : undefined);
+    broadcast.reloadSchedule();
+    res.status(201).json(entry);
+  });
+
+  router.put("/schedule/:id", (req, res) => {
+    const id = Number(req.params["id"]);
+    if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+    const { at, app, label, status } = req.body as { at?: unknown; app?: unknown; label?: unknown; status?: unknown };
+    const patch: Parameters<typeof updateScheduleEntry>[1] = {};
+    if (typeof at === "string" && at.trim())     patch.at     = at.trim();
+    if (typeof app === "string" && app.trim())   patch.app    = app.trim();
+    if (typeof label === "string")               patch.label  = label.trim() || null;
+    if (status === "pending" || status === "fired" || status === "skipped") patch.status = status;
+    updateScheduleEntry(id, patch);
+    broadcast.reloadSchedule();
+    res.json({ ok: true });
+  });
+
+  router.delete("/schedule/:id", (req, res) => {
+    const id = Number(req.params["id"]);
+    if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+    deleteScheduleEntry(id);
+    broadcast.reloadSchedule();
+    res.json({ ok: true });
+  });
+
+  router.post("/schedule/reload", (_req, res) => {
+    broadcast.reloadSchedule();
+    res.json({ ok: true });
   });
 
   // ─── State ────────────────────────────────────────────────────────────────────
