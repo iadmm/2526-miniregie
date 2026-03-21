@@ -44,6 +44,12 @@
   --font:        system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono:   'Menlo', 'Consolas', 'Courier New', monospace;
 
+  /* Font scale */
+  --font-size-xs:   11px; /* ALL CAPS badges, section headers */
+  --font-size-sm:   12px; /* secondary metadata, timestamps */
+  --font-size-base: 13px; /* body content — matches html root */
+  --font-size-md:   14px; /* primary labels, names */
+
   /* Geometry — near-flat like NLE software */
   --radius:      2px;
   --radius-md:   4px;
@@ -57,7 +63,7 @@ html, body, #app {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
 }
@@ -95,8 +101,8 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn-danger    { background: var(--danger); color: #fff; }
 .btn-danger:hover:not(:disabled) { background: var(--danger-dim); }
 
-.btn-sm        { padding: 3px 9px; font-size: 12px; }
-.btn-xs        { padding: 2px 7px; font-size: 11px; }
+.btn-sm        { padding: 3px 9px; font-size: var(--font-size-sm); }
+.btn-xs        { padding: 2px 7px; font-size: var(--font-size-xs); }
 
 /* ─── Inputs ────────────────────────────────────────────────────────────────── */
 
@@ -123,7 +129,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   gap: 4px;
   padding: 2px 7px;
   border-radius: var(--radius);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -153,7 +159,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 }
 
 .panel-label {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -199,7 +205,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 
 /* ─── Misc utilities ────────────────────────────────────────────────────────── */
 
-.mono      { font-family: var(--font-mono); font-size: 12px; }
+.mono      { font-family: var(--font-mono); font-size: var(--font-size-sm); }
 .text-muted { color: var(--text-muted); }
 .text-dim   { color: var(--text-dim); }
 .error-msg {
@@ -208,5 +214,5 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   color: #f87171;
   border-radius: var(--radius);
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }

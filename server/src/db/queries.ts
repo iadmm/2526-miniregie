@@ -1,4 +1,4 @@
-import { eq, and, inArray, notInArray, gte, lte, max, count, sql, asc, isNotNull } from 'drizzle-orm';
+import { eq, and, inArray, notInArray, gte, lte, max, count, sql, asc } from 'drizzle-orm';
 import { db } from './index.js';
 import { mediaItems, mediaEvents, participants, broadcastEvents, scheduleEntries } from './schema.js';
 import type { MediaItem, MediaEvent, MediaStatus, MediaType, Participant, BroadcastEvent, ScheduleEntry, ScheduleEntryStatus } from '../../../shared/types.js';
@@ -10,7 +10,6 @@ export interface ReadyItemFilters {
   excludeTypes?:    MediaType[];
   submittedAfter?:  number;
   submittedBefore?: number;
-  positionedOnly?:  boolean; // only items with queue_position IS NOT NULL
 }
 
 export type ScoredRow = MediaItem & {
@@ -64,12 +63,11 @@ function rowToParticipant(row: typeof participants.$inferSelect): Participant {
 
 // ─── media_items ──────────────────────────────────────────────────────────────
 
-export function insertItem(item: MediaItem, priority: number): void {
+export function insertItem(item: MediaItem): void {
   db.insert(mediaItems).values({
     id:            item.id,
     type:          item.type,
     content:       item.content,
-    priority,
     status:        item.status,
     submittedAt:   item.submittedAt,
     authorId:      item.author.participantId,
@@ -130,10 +128,6 @@ export function batchUpdateQueuePositions(updates: Array<{ id: string; queuePosi
   });
 }
 
-export function updateSubmittedAt(id: string, submittedAt: number): void {
-  db.update(mediaItems).set({ submittedAt }).where(eq(mediaItems.id, id)).run();
-}
-
 export function getReadyItems(filters: ReadyItemFilters = {}): ScoredRow[] {
   const conditions = [eq(mediaItems.status, 'ready')];
 
@@ -141,7 +135,6 @@ export function getReadyItems(filters: ReadyItemFilters = {}): ScoredRow[] {
   if (filters.excludeTypes)    conditions.push(notInArray(mediaItems.type, filters.excludeTypes));
   if (filters.submittedAfter)  conditions.push(gte(mediaItems.submittedAt, filters.submittedAfter));
   if (filters.submittedBefore) conditions.push(lte(mediaItems.submittedAt, filters.submittedBefore));
-  if (filters.positionedOnly)  conditions.push(isNotNull(mediaItems.queuePosition));
 
   const rows = db.select({
     id:                mediaItems.id,
@@ -162,6 +155,7 @@ export function getReadyItems(filters: ReadyItemFilters = {}): ScoredRow[] {
   .leftJoin(mediaEvents, eq(mediaEvents.itemId, mediaItems.id))
   .where(and(...conditions))
   .groupBy(mediaItems.id)
+  .orderBy(asc(mediaItems.queuePosition))
   .all();
 
   return rows.map(row => ({ ...rowToMediaItem(row), displayedCount: row.displayedCount, skippedCount: row.skippedCount }));
@@ -344,12 +338,13 @@ export function searchParticipants(query?: string): Participant[] {
 // ─── reset ────────────────────────────────────────────────────────────────────
 
 /**
- * Deletes all media data for a full JAM reset.
- * Participants and broadcast_events are preserved.
+ * Deletes all media data and dev-seed participants for a full JAM reset.
+ * Real participants and broadcast_events are preserved.
  */
 export function resetAllMedia(): void {
   db.delete(mediaEvents).run();
   db.delete(mediaItems).run();
+  db.delete(participants).where(eq(participants.role, 'seed:dev')).run();
 }
 
 // ─── broadcast_events ─────────────────────────────────────────────────────────

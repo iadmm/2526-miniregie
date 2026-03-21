@@ -46,7 +46,7 @@
   .queue-tabs__tab {
     padding: 0 14px;
     height: 36px;
-    font-size: 11px;
+    font-size: var(--font-size-base);
     font-family: var(--font-mono, monospace);
     font-weight: 600;
     letter-spacing: 0.04em;

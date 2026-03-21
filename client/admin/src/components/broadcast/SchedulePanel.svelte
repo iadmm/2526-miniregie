@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { socket, socketState } from '../lib/socket.svelte.ts';
-  import { api } from '../lib/api.ts';
+  import { socket, socketState } from '../../lib/socket.svelte.ts';
+  import { api } from '../../lib/api.ts';
   import type { ScheduleEntry } from '@shared/types';
 
   // ─── App catalogue ────────────────────────────────────────────────────────────
@@ -261,13 +261,13 @@
 
   .schedule-panel__next {
     font-family: var(--font-mono, monospace);
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     color: var(--warning);
   }
 
   .schedule-panel__add-btn {
     font-family: var(--font-mono, monospace);
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     padding: 2px 8px;
     border-radius: var(--radius);
@@ -285,7 +285,7 @@
 
   .schedule-panel__error {
     padding: 5px 10px;
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--live);
     background: rgba(229, 57, 53, 0.08);
     flex-shrink: 0;
@@ -304,7 +304,7 @@
   }
 
   .schedule-form__title {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -318,7 +318,7 @@
   }
 
   .schedule-form__label {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-family: var(--font-mono, monospace);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -351,7 +351,7 @@
     border: 1px solid var(--border-dim);
     border-radius: var(--radius);
     color: var(--text);
-    font-size: 11px;
+    font-size: var(--font-size-base);
     font-family: var(--font, sans-serif);
     padding: 4px 7px;
     width: 100%;
@@ -375,7 +375,7 @@
 
   .schedule-form__cancel {
     font-family: var(--font-mono, monospace);
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     padding: 4px 10px;
     border-radius: var(--radius);
     border: 1px solid var(--border-dim);
@@ -388,7 +388,7 @@
 
   .schedule-form__save {
     font-family: var(--font-mono, monospace);
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-weight: 700;
     padding: 4px 12px;
     border-radius: var(--radius);
@@ -411,7 +411,7 @@
 
   .schedule-panel__empty {
     padding: 24px;
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--text-dim);
     text-align: center;
   }
@@ -441,18 +441,18 @@
 
   .schedule-entry__at {
     font-family: var(--font-mono, monospace);
-    font-size: 11px;
+    font-size: var(--font-size-base);
     font-weight: 700;
     color: var(--text);
   }
 
   .schedule-entry__app {
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--text-muted);
   }
 
   .schedule-entry__label {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     color: var(--text-dim);
     font-style: italic;
   }
@@ -466,7 +466,7 @@
 
   .schedule-entry__status {
     font-family: var(--font-mono, monospace);
-    font-size: 9px;
+    font-size: var(--font-size-xs);
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -482,7 +482,7 @@
     background: none;
     border: none;
     color: var(--text-dim);
-    font-size: 12px;
+    font-size: var(--font-size-md);
     cursor: pointer;
     padding: 2px 4px;
     border-radius: var(--radius);

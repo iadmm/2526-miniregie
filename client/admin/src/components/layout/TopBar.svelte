@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { auth, logout } from '../lib/auth.svelte.ts';
+  import { auth, logout } from '../../lib/auth.svelte.ts';
 </script>
 
 <header class="topbar">
@@ -23,7 +23,7 @@
   }
 
   .logo {
-    font-size: 12px;
+    font-size: var(--font-size-md);
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -38,7 +38,7 @@
   }
 
   .user {
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--text-muted);
   }
 
@@ -47,7 +47,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     color: var(--text-dim);
-    font-size: 11px;
+    font-size: var(--font-size-base);
     padding: 2px 8px;
     cursor: pointer;
     transition: color 0.15s, border-color 0.15s;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { socket, socketState } from '../lib/socket.svelte.ts';
-  import { api } from '../lib/api.ts';
+  import { socket, socketState } from '../../lib/socket.svelte.ts';
+  import { api } from '../../lib/api.ts';
   import type { MediaItem } from '@shared/types';
 
   type PlayedItem = MediaItem & { playedAt: number };
@@ -119,13 +119,13 @@
   }
 
   .played-panel__loading {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     color: var(--text-dim);
     font-family: var(--font-mono);
   }
 
   .played-panel__count {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-family: var(--font-mono);
     color: var(--text-muted);
     background: var(--bg-surface);
@@ -134,7 +134,7 @@
   }
 
   .played-panel__empty {
-    font-size: 12px;
+    font-size: var(--font-size-md);
     color: var(--text-dim);
     text-align: center;
     margin-top: 32px;
@@ -166,7 +166,7 @@
     grid-row: 1 / 3;
     align-self: center;
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     color: var(--text-muted);
     background: var(--bg-surface);
     border: 1px solid var(--border-dim);
@@ -184,20 +184,20 @@
 
   .played-item__type {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
 
   .played-item__author {
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--text-primary);
   }
 
   .played-item__age {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     color: var(--text-dim);
     margin-left: auto;
   }
@@ -205,7 +205,7 @@
   .played-item__label {
     grid-column: 1;
     grid-row: 2;
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;

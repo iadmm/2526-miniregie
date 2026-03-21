@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { socketState } from '../lib/socket.svelte.ts';
-  import { api } from '../lib/api.ts';
+  import { socketState } from '../../lib/socket.svelte.ts';
+  import { api } from '../../lib/api.ts';
   import type { AppId } from '@shared/types';
 
   const APPS: { id: AppId; label: string }[] = [
@@ -156,7 +156,7 @@
 
   .jam-control__status-text {
     font-family: var(--font-mono, monospace);
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-weight: 700;
     letter-spacing: 0.1em;
   }
@@ -167,7 +167,7 @@
 
   .jam-control__timer {
     font-family: var(--font-mono, monospace);
-    font-size: 13px;
+    font-size: var(--font-size-md);
     font-weight: 600;
     color: var(--text);
     letter-spacing: 0.05em;
@@ -188,14 +188,14 @@
 
   .jam-control__confirm-label {
     font-family: var(--font-mono, monospace);
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     color: var(--text-dim);
     white-space: nowrap;
   }
 
   .jam-control__btn {
     font-family: var(--font-mono, monospace);
-    font-size: 11px;
+    font-size: var(--font-size-base);
     font-weight: 700;
     letter-spacing: 0.08em;
     border-radius: var(--radius);
@@ -268,7 +268,7 @@
 
   .jam-control__dispatch-label {
     font-family: var(--font-mono, monospace);
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--text-dim);
@@ -281,7 +281,7 @@
     border-radius: var(--radius);
     color: var(--text);
     font-family: var(--font-mono, monospace);
-    font-size: 11px;
+    font-size: var(--font-size-base);
     padding: 4px 8px;
     appearance: none;
     max-width: 130px;
@@ -292,7 +292,7 @@
     background: var(--bg-surface);
     border: 1px solid var(--border);
     padding: 4px 10px;
-    font-size: 13px;
+    font-size: var(--font-size-md);
   }
 
   .jam-control__btn--dispatch:hover {

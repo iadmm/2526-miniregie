@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { socket, socketState } from '../lib/socket.svelte.ts';
-  import { api } from '../lib/api.ts';
+  import { socket, socketState } from '../../lib/socket.svelte.ts';
+  import { api } from '../../lib/api.ts';
   import type { MediaItem } from '@shared/types';
   import QueueItem from './QueueItem.svelte';
 
@@ -148,13 +148,13 @@
   }
 
   .queue-panel__loading {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     color: var(--text-dim);
     font-family: var(--font-mono);
   }
 
   .queue-panel__count {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-family: var(--font-mono);
     color: var(--text-muted);
     background: var(--bg-surface);
@@ -163,7 +163,7 @@
   }
 
   .queue-panel__empty {
-    font-size: 12px;
+    font-size: var(--font-size-md);
     color: var(--text-dim);
     text-align: center;
     margin-top: 32px;

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { socketState } from '../lib/socket.svelte.ts';
+  import { socketState } from '../../lib/socket.svelte.ts';
 
   let now = $state(Date.now());
 
@@ -90,7 +90,7 @@
   .timecodes__item:first-child { border-left: none; }
 
   .timecodes__label {
-    font-size: 9px;
+    font-size: var(--font-size-xs);
     font-variant: small-caps;
     letter-spacing: 0.08em;
     color: var(--text-muted); /* #888 — 5.6:1 on --bg-deep */
@@ -98,7 +98,7 @@
 
   .timecodes__value {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: var(--font-size-md);
     font-weight: 500;
     color: var(--text); /* #dcdcdc — 13.8:1 on --bg-deep */
     letter-spacing: 0.03em;

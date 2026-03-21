@@ -8,6 +8,13 @@
       "when": 1774023682237,
       "tag": "0000_lying_warlock",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1774039917256,
+      "tag": "0001_drop_priority",
+      "breakpoints": true
     }
   ]
 }

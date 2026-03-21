@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { socketState } from '../lib/socket.svelte.ts';
+  import { socketState } from '../../lib/socket.svelte';
   import Timecodes from './Timecodes.svelte';
 
   const BROADCAST_URL = (import.meta.env.VITE_BROADCAST_URL as string | undefined) ?? '/';
@@ -116,8 +116,6 @@
     <div class="zoom-badge">{zoomPct}%</div>
     <button class="zoom-reset" onclick={resetView} title="Reset view (dbl-click)">↺</button>
   </div>
-
-  <Timecodes />
 </div>
 
 <style>
@@ -130,13 +128,13 @@
   }
 
   .active-label {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-family: var(--font-mono);
     color: var(--accent);
   }
 
   .transitioning {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     color: var(--warning);
     animation: blink 0.6s step-end infinite;
   }
@@ -155,7 +153,7 @@
     position: absolute;
     bottom: 6px;
     left: 8px;
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-family: var(--font-mono);
     color: rgba(255,255,255,0.5);
     background: rgba(0,0,0,0.5);
@@ -172,7 +170,7 @@
     background: rgba(0,0,0,0.55);
     border: 1px solid rgba(255,255,255,0.15);
     color: rgba(255,255,255,0.6);
-    font-size: 13px;
+    font-size: var(--font-size-md);
     line-height: 1;
     width: 22px;
     height: 22px;

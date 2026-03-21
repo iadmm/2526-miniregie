@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import type { JamConfig } from '../../shared/types.js';
+import type { JamConfig } from "@shared/types";
 
 export type { JamConfig };
 

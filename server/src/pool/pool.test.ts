@@ -1,6 +1,6 @@
 /**
- * Tests for PoolManager session-2 methods:
- * getMain, getPlayed, getItems (updated), reorder, replay, enrich-link-dedup
+ * Tests for PoolManager queue methods:
+ * getMain, getPlayed, reorder, replay, enrich-link-dedup
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -26,7 +26,6 @@ const mockInsertItem             = vi.fn();
 const mockUpdateStatus           = vi.fn();
 const mockUpdateContent          = vi.fn();
 const mockUpdateQueuePosition    = vi.fn();
-const mockUpdateSubmittedAt      = vi.fn();
 const mockInsertEvent            = vi.fn();
 const mockGetLastSubmissionAt    = vi.fn().mockReturnValue(null);
 const mockGetClipCount           = vi.fn().mockReturnValue(0);
@@ -41,7 +40,6 @@ vi.mock('../db/queries.js', () => ({
   updateStatus:               (...args: unknown[]) => mockUpdateStatus(...args),
   updateContent:              (...args: unknown[]) => mockUpdateContent(...args),
   updateQueuePosition:        (...args: unknown[]) => mockUpdateQueuePosition(...args),
-  updateSubmittedAt:          (...args: unknown[]) => mockUpdateSubmittedAt(...args),
   insertEvent:                (...args: unknown[]) => mockInsertEvent(...args),
   getLastSubmissionAt:        (...args: unknown[]) => mockGetLastSubmissionAt(...args),
   getClipCount:               (...args: unknown[]) => mockGetClipCount(...args),
@@ -92,33 +90,28 @@ describe('PoolManager — getMain', () => {
     mockGetPlayedItems.mockReturnValue([]);
   });
 
-  it('queries with positionedOnly:true', () => {
+  it('returns items in the order DB provides (queuePosition ASC)', () => {
     const pool = makePool();
-    pool.getMain();
-    expect(mockGetReadyItems).toHaveBeenCalledWith(expect.objectContaining({ positionedOnly: true }));
-  });
-
-  it('returns items sorted by queuePosition ASC', () => {
-    const pool = makePool();
+    // Simulate DB returning items already sorted by position
     mockGetReadyItems.mockReturnValue([
-      makeItem({ id: 'b', queuePosition: 2 }),
       makeItem({ id: 'a', queuePosition: 1 }),
+      makeItem({ id: 'b', queuePosition: 2 }),
       makeItem({ id: 'c', queuePosition: 3 }),
     ]);
     const result = pool.getMain();
     expect(result.map(i => i.id)).toEqual(['a', 'b', 'c']);
   });
 
-  it('passes types filter', () => {
+  it('passes types filter to DB', () => {
     const pool = makePool();
     pool.getMain({ types: ['photo'] });
-    expect(mockGetReadyItems).toHaveBeenCalledWith(expect.objectContaining({ types: ['photo'], positionedOnly: true }));
+    expect(mockGetReadyItems).toHaveBeenCalledWith(expect.objectContaining({ types: ['photo'] }));
   });
 
-  it('passes excludeTypes filter', () => {
+  it('passes excludeTypes filter to DB', () => {
     const pool = makePool();
     pool.getMain({ excludeTypes: ['ticker'] });
-    expect(mockGetReadyItems).toHaveBeenCalledWith(expect.objectContaining({ excludeTypes: ['ticker'], positionedOnly: true }));
+    expect(mockGetReadyItems).toHaveBeenCalledWith(expect.objectContaining({ excludeTypes: ['ticker'] }));
   });
 });
 
@@ -148,67 +141,6 @@ describe('PoolManager — getPlayed', () => {
     ]);
     const result = pool.getPlayed({ types: ['photo'] });
     expect(result.map(i => i.id)).toEqual(['p1']);
-  });
-});
-
-// ─── getItems (union) ─────────────────────────────────────────────────────────
-
-describe('PoolManager — getItems (union ready + played)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockGetReadyItems.mockReturnValue([]);
-    mockGetPlayedItems.mockReturnValue([]);
-  });
-
-  it('returns union of ready and played items', () => {
-    const pool = makePool();
-    mockGetReadyItems.mockReturnValue([makeItem({ id: 'r1', status: 'ready',  submittedAt: 1000 })]);
-    mockGetPlayedItems.mockReturnValue([makeItem({ id: 'p1', status: 'played', submittedAt: 2000 })]);
-    const result = pool.getItems();
-    expect(result.map(i => i.id)).toEqual(expect.arrayContaining(['r1', 'p1']));
-    expect(result).toHaveLength(2);
-  });
-
-  it('sorts by submittedAt ASC by default', () => {
-    const pool = makePool();
-    mockGetReadyItems.mockReturnValue([makeItem({ id: 'r1', submittedAt: 2000 })]);
-    mockGetPlayedItems.mockReturnValue([makeItem({ id: 'p1', submittedAt: 1000 })]);
-    const result = pool.getItems();
-    expect(result.map(i => i.id)).toEqual(['p1', 'r1']);
-  });
-
-  it('sorts by submittedAt DESC when requested', () => {
-    const pool = makePool();
-    mockGetReadyItems.mockReturnValue([makeItem({ id: 'r1', submittedAt: 2000 })]);
-    mockGetPlayedItems.mockReturnValue([makeItem({ id: 'p1', submittedAt: 1000 })]);
-    const result = pool.getItems({ sort: 'submittedAt DESC' });
-    expect(result.map(i => i.id)).toEqual(['r1', 'p1']);
-  });
-
-  it('filters by types across both sets', () => {
-    const pool = makePool();
-    mockGetReadyItems.mockReturnValue([
-      makeItem({ id: 'r-photo', type: 'photo', submittedAt: 1000 }),
-      makeItem({ id: 'r-note',  type: 'note',  submittedAt: 2000 }),
-    ]);
-    mockGetPlayedItems.mockReturnValue([
-      makeItem({ id: 'p-photo', type: 'photo', status: 'played', submittedAt: 3000 }),
-    ]);
-    const result = pool.getItems({ types: ['photo'] });
-    expect(result.map(i => i.id)).toEqual(['r-photo', 'p-photo']);
-  });
-
-  it('filters by submittedAfter', () => {
-    const pool = makePool();
-    mockGetReadyItems.mockReturnValue([
-      makeItem({ id: 'old', submittedAt: 500  }),
-      makeItem({ id: 'new', submittedAt: 2000 }),
-    ]);
-    mockGetPlayedItems.mockReturnValue([
-      makeItem({ id: 'old-played', status: 'played', submittedAt: 300 }),
-    ]);
-    const result = pool.getItems({ submittedAfter: 1000 });
-    expect(result.map(i => i.id)).toEqual(['new']);
   });
 });
 
@@ -278,7 +210,7 @@ describe('PoolManager — replay', () => {
     expect(mockUpdateStatus).toHaveBeenCalledWith('x', 'ready');
   });
 
-  it('assigns position 1 when queue.main is empty (MAX = null)', () => {
+  it('assigns position 1 when queue is empty (MAX = null)', () => {
     const pool = makePool();
     mockGetItemById.mockReturnValue(makeItem({ id: 'x', status: 'played' }));
     mockGetMaxQueuePosition.mockReturnValue(null);
@@ -328,42 +260,40 @@ describe('PoolManager — enrich-link-dedup (runPipeline)', () => {
     mockGetClipCount.mockReturnValue(0);
     mockInsertItem.mockReturnValue(undefined);
     mockGetMaxQueuePosition.mockReturnValue(3);
+    mockGetReadyItems.mockReturnValue([]);
     mockGetPlayedItems.mockReturnValue([]);
-    // Default: sanitize always passes with a link input
     mockSanitize.mockReturnValue({ ok: true, validated: { type: 'link', url: 'https://example.com' } });
   });
 
-  it('assigns queue position when URL is unique (not in main or played)', async () => {
+  it('assigns queue position MAX+1 when URL is unique', async () => {
     const pool = makePool();
-    mockGetReadyItems.mockReturnValue([]);
-    mockGetPlayedItems.mockReturnValue([]);
     mockResolve.mockResolvedValue({ url: 'https://example.com', title: null, description: null, thumbnail: null, siteName: null, caption: null });
 
     pool.addItem({ type: 'link', url: 'https://example.com' }, 'p1');
     await new Promise(r => setImmediate(r));
 
     expect(mockUpdateQueuePosition).toHaveBeenCalledWith(expect.any(String), 4);
+    expect(mockUpdateStatus).toHaveBeenCalledWith(expect.any(String), 'ready');
   });
 
-  it('does NOT assign queue position when URL exists in queue.main', async () => {
+  it('evicts item when URL exists in queue', async () => {
     const pool = makePool();
     const dupeUrl = 'https://dupe.com';
     mockGetReadyItems.mockReturnValue([
       makeItem({ id: 'existing', queuePosition: 1, content: { url: dupeUrl, title: null, description: null, thumbnail: null, siteName: null, caption: null } }),
     ]);
-    mockGetPlayedItems.mockReturnValue([]);
     mockResolve.mockResolvedValue({ url: dupeUrl, title: null, description: null, thumbnail: null, siteName: null, caption: null });
 
     pool.addItem({ type: 'link', url: dupeUrl }, 'p1');
     await new Promise(r => setImmediate(r));
 
     expect(mockUpdateQueuePosition).not.toHaveBeenCalled();
+    expect(mockUpdateStatus).toHaveBeenCalledWith(expect.any(String), 'evicted');
   });
 
-  it('does NOT assign queue position when URL exists in queue.played', async () => {
+  it('evicts item when URL exists in played', async () => {
     const pool = makePool();
     const dupeUrl = 'https://played.com';
-    mockGetReadyItems.mockReturnValue([]);
     mockGetPlayedItems.mockReturnValue([
       makeItem({ id: 'existing', status: 'played', content: { url: dupeUrl, title: null, description: null, thumbnail: null, siteName: null, caption: null } }),
     ]);
@@ -373,18 +303,18 @@ describe('PoolManager — enrich-link-dedup (runPipeline)', () => {
     await new Promise(r => setImmediate(r));
 
     expect(mockUpdateQueuePosition).not.toHaveBeenCalled();
+    expect(mockUpdateStatus).toHaveBeenCalledWith(expect.any(String), 'evicted');
   });
 
   it('assigns queue position for note (no URL field)', async () => {
     const pool = makePool();
     mockSanitize.mockReturnValue({ ok: true, validated: { type: 'note', text: 'hello world' } });
-    mockGetReadyItems.mockReturnValue([]);
-    mockGetPlayedItems.mockReturnValue([]);
     mockResolve.mockResolvedValue({ text: 'hello world' });
 
     pool.addItem({ type: 'note', text: 'hello world' }, 'p1');
     await new Promise(r => setImmediate(r));
 
     expect(mockUpdateQueuePosition).toHaveBeenCalledWith(expect.any(String), 4);
+    expect(mockUpdateStatus).toHaveBeenCalledWith(expect.any(String), 'ready');
   });
 });

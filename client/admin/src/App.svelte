@@ -1,15 +1,16 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { PaneGroup, Pane, PaneResizer } from 'paneforge';
-  import { auth, checkSession } from './lib/auth.svelte.ts';
-  import LoginScreen from './components/LoginScreen.svelte';
-  import TopBar from './components/TopBar.svelte';
-  import ProgramMonitor from './components/ProgramMonitor.svelte';
-  import QueueTabs from './components/QueueTabs.svelte';
-  import RightTabs from './components/RightTabs.svelte';
-  import SchedulePanel from './components/SchedulePanel.svelte';
-  import JamControlPanel from './components/JamControlPanel.svelte';
-  import HealthPanel from './components/HealthPanel.svelte';
+  import { auth, checkSession } from './lib/auth.svelte';
+  import LoginScreen from './components/auth/LoginScreen.svelte';
+  import TopBar from './components/layout/TopBar.svelte';
+  import ProgramMonitor from './components/broadcast/ProgramMonitor.svelte';
+  import QueueTabs from './components/queue/QueueTabs.svelte';
+  import RightTabs from './components/layout/RightTabs.svelte';
+  import SchedulePanel from './components/broadcast/SchedulePanel.svelte';
+  import JamControlPanel from './components/broadcast/JamControlPanel.svelte';
+  import HealthPanel from './components/system/HealthPanel.svelte';
+  import Timecodes from "./components/broadcast/Timecodes.svelte";
 
   onMount(checkSession);
 </script>
@@ -27,6 +28,7 @@
           <Pane defaultSize={33} minSize={10}>
             <div class="monitor-col">
               <ProgramMonitor />
+              <Timecodes />
               <JamControlPanel />
             </div>
           </Pane>
@@ -40,7 +42,6 @@
           </Pane>
         </PaneGroup>
       </Pane>
-
       <PaneResizer />
 
       <Pane defaultSize={40} minSize={15}>
@@ -67,7 +68,7 @@
     background: var(--bg-deep);
     color: var(--text-dim);
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: var(--font-size-md);
   }
 
   .shell {

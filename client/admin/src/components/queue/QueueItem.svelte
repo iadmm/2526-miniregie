@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { api } from '../lib/api.ts';
+  import { api } from '../../lib/api.ts';
   import type {
     MediaItem,
     PhotoContent, GifContent, NoteContent, ClipContent,
     TickerContent, YoutubeContent, LinkContent, InterviewContent,
   } from '@shared/types';
-  import DropdownMenu from './DropdownMenu.svelte';
+  import DropdownMenu from '../ui/DropdownMenu.svelte';
 
   interface Props {
     item: MediaItem;
@@ -301,7 +301,7 @@
   .queue-item--dragging .queue-item__grip { cursor: grabbing; opacity: 1; }
 
   .queue-item__type {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -309,7 +309,7 @@
   }
 
   .queue-item__author {
-    font-size: 11px;
+    font-size: var(--font-size-base);
     font-weight: 500;
     color: var(--text);
     white-space: nowrap;
@@ -327,7 +327,7 @@
   }
 
   .queue-item__on-air {
-    font-size: 9px;
+    font-size: var(--font-size-xs);
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -365,7 +365,7 @@
   }
 
   .queue-item__caption {
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--text); /* primary content — 11.6:1 */
     line-height: 1.4;
     overflow: hidden;
@@ -375,7 +375,7 @@
   }
 
   .queue-item__text {
-    font-size: 11px;
+    font-size: var(--font-size-base);
     font-style: italic;
     color: var(--text); /* primary content — italic already signals type */
     line-height: 1.4;
@@ -387,12 +387,12 @@
 
   .queue-item__meta-label {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--text);
   }
 
   .queue-item__footer {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     color: var(--text-dim);
     white-space: nowrap;
     overflow: hidden;
@@ -410,7 +410,7 @@
     border: none;
     border-radius: var(--radius);
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: var(--font-size-md);
     font-weight: 400;
     text-align: left;
     cursor: pointer;
@@ -450,7 +450,7 @@
   .queue-item__edit-input {
     resize: vertical;
     min-height: 48px;
-    font-size: 11px;
+    font-size: var(--font-size-base);
   }
 
   .queue-item__edit-actions {

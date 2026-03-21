@@ -135,7 +135,6 @@ export class SceneCompositor {
 
     let items = this.snapshot.filter(i =>
       i.status === 'ready' &&
-      i.queuePosition !== null &&
       !excluded.has(i.id),
     );
 
@@ -144,7 +143,7 @@ export class SceneCompositor {
       items = items.filter(i => allowed.has(i.type as MediaType));
     }
 
-    return items.sort((a, b) => (a.queuePosition ?? Infinity) - (b.queuePosition ?? Infinity));
+    return items.sort(fifoSort);
   }
 
   private pickPrimary(): MediaItem | undefined {
@@ -290,6 +289,9 @@ export class SceneCompositor {
   // ── Server communication ───────────────────────────────────────────────────
 
   private markDisplayed(item: MediaItem): void {
+    // Optimistically remove from local snapshot so scheduleNext() cannot re-pick
+    // the same item before the server confirms the status change.
+    this.snapshot = this.snapshot.filter(i => i.id !== item.id);
     this.socket.emit('pool:mark', { itemId: item.id, event: 'displayed' });
   }
 
@@ -297,4 +299,14 @@ export class SceneCompositor {
     const ids = [this.primaryId, this.companionId].filter(Boolean) as string[];
     this.socket.emit('jam:state-update', { activeItemIds: ids, regime: this.regime });
   }
+}
+
+// Mirrors PoolManager.fifoSort: explicit queuePosition first, then FIFO by submittedAt.
+function fifoSort(a: MediaItem, b: MediaItem): number {
+  const aPos = a.queuePosition;
+  const bPos = b.queuePosition;
+  if (aPos !== null && bPos !== null) return aPos - bPos;
+  if (aPos !== null) return -1;
+  if (bPos !== null) return 1;
+  return a.submittedAt - b.submittedAt;
 }

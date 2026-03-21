@@ -1,4 +1,4 @@
-import { api } from './api.ts';
+import { api } from './api';
 import type { Participant } from '@shared/types';
 
 // ─── Reactive auth state ──────────────────────────────────────────────────────

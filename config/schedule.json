@@ -1,7 +1,7 @@
 [
   {
-    "_note": "JAM_START is a manual admin action — not in schedule. It triggers countdown-to-jam automatically.",
-    "at": "H+00:10:00",
+    "_note": "JAM_START is a manual admin action — not in schedule. Edit this entry to match your desired countdown duration.",
+    "at": "H+00:00:10",
     "app": "jam-mode"
   },
   {

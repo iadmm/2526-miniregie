@@ -1,11 +1,17 @@
 <script lang="ts">
-  import { setContext } from 'svelte';
   import { socketState } from '../../lib/socket.svelte.ts';
   import { api } from '../../lib/api.ts';
   import type { JamConfig } from '@shared/types';
-  import FieldGroup from '../FieldGroup.svelte';
+  import FieldGroup from '../ui/FieldGroup.svelte';
 
   type SaveStatus = 'idle' | 'pending' | 'saved' | 'error';
+
+  const SAVE_LABELS: Record<SaveStatus, string> = {
+    idle:    '',
+    pending: 'saving…',
+    saved:   'saved',
+    error:   'error',
+  };
 
   const jam = $derived(socketState.globalState?.jam);
 
@@ -15,13 +21,9 @@
   let initialized                                         = false;
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // expose save status to all FieldGroup children via context
-  setContext<() => SaveStatus>('saveStatus', () => saveStatus);
-
   let form = $state({
     startAt:               '',
     endsAt:                '',
-    countdownMin:          10,
     transitionFailsafeSec: 3,
     statePersistSec:       30,
     postJamIdleMin:        5,
@@ -43,7 +45,6 @@
   function configToForm(cfg: JamConfig): void {
     form.startAt               = isoToDatetimeLocal(cfg.jam.startAt);
     form.endsAt                = isoToDatetimeLocal(cfg.jam.endsAt);
-    form.countdownMin          = cfg.jam.countdownDurationMs / 60_000;
     form.transitionFailsafeSec = cfg.broadcast.transitionFailsafeMs / 1_000;
     form.statePersistSec       = cfg.broadcast.statePersistIntervalMs / 1_000;
     form.postJamIdleMin        = cfg.broadcast.postJamIdleDelayMs / 60_000;
@@ -54,9 +55,8 @@
   function formToConfig(): Partial<JamConfig> {
     return {
       jam: {
-        startAt:             datetimeLocalToIso(form.startAt),
-        endsAt:              datetimeLocalToIso(form.endsAt),
-        countdownDurationMs: form.countdownMin * 60_000,
+        startAt: datetimeLocalToIso(form.startAt),
+        endsAt:  datetimeLocalToIso(form.endsAt),
       },
       broadcast: {
         transitionFailsafeMs:   form.transitionFailsafeSec * 1_000,
@@ -103,51 +103,43 @@
   }
 </script>
 
+<div class="settings-header">
+  <span class="settings-header__title">Settings</span>
+  {#if saveStatus !== 'idle'}
+    <span class="settings-header__status settings-header__status--{saveStatus}">
+      {SAVE_LABELS[saveStatus]}
+    </span>
+  {/if}
+</div>
+
 <div class="settings-body">
 
   <section class="settings-section">
-    <div class="section-title">État JAM</div>
-    <div class="field-row">
-      <span class="field-label">Statut</span>
-      <span class="badge badge-{jam?.status ?? 'idle'}">{jam?.status ?? 'idle'}</span>
-    </div>
-    {#if jam?.startedAt}
-      <div class="field-row">
-        <span class="field-label">Démarré à</span>
-        <span class="mono">{new Date(jam.startedAt).toLocaleTimeString('fr-BE')}</span>
-      </div>
-    {/if}
-  </section>
-
-  <section class="settings-section">
     <div class="section-title">Calendrier</div>
-    <FieldGroup id="cfg-start-at" label="Début" desc="Heure de démarrage du JAM (déclenche le countdown)" value={form.startAt}>
+    <FieldGroup id="cfg-start-at" label="Début" desc="Heure de démarrage du JAM (déclenche le countdown)">
       <input id="cfg-start-at" type="datetime-local" bind:value={form.startAt} />
     </FieldGroup>
-    <FieldGroup id="cfg-ends-at" label="Fin" desc="Heure de fin absolue du JAM (trigger automatique)" value={form.endsAt}>
+    <FieldGroup id="cfg-ends-at" label="Fin" desc="Heure de fin absolue du JAM (trigger automatique)">
       <input id="cfg-ends-at" type="datetime-local" bind:value={form.endsAt} />
-    </FieldGroup>
-    <FieldGroup id="cfg-countdown" label="Countdown" desc="Durée du décompte avant le début du JAM" unit="min" value={form.countdownMin}>
-      <input id="cfg-countdown" type="number" min="1" bind:value={form.countdownMin} />
     </FieldGroup>
   </section>
 
   <section class="settings-section">
     <div class="section-title">Broadcast</div>
-    <FieldGroup id="cfg-failsafe" label="Failsafe transition" desc="Délai max avant forçage de transition si l'app ne répond pas" unit="s" value={form.transitionFailsafeSec}>
+    <FieldGroup id="cfg-failsafe" label="Failsafe transition" desc="Délai max avant forçage de transition si l'app ne répond pas" unit="s">
       <input id="cfg-failsafe" type="number" min="1" bind:value={form.transitionFailsafeSec} />
     </FieldGroup>
-    <FieldGroup id="cfg-persist" label="Persist état" desc="Intervalle de sauvegarde de state.json sur disque" unit="s" value={form.statePersistSec}>
+    <FieldGroup id="cfg-persist" label="Persist état" desc="Intervalle de sauvegarde de state.json sur disque" unit="s">
       <input id="cfg-persist" type="number" min="5" bind:value={form.statePersistSec} />
     </FieldGroup>
-    <FieldGroup id="cfg-post-idle" label="Post-jam idle" desc="Temps d'attente en idle avant de passer en post-JAM" unit="min" value={form.postJamIdleMin}>
+    <FieldGroup id="cfg-post-idle" label="Post-jam idle" desc="Temps d'attente en idle avant de passer en post-JAM" unit="min">
       <input id="cfg-post-idle" type="number" min="1" bind:value={form.postJamIdleMin} />
     </FieldGroup>
   </section>
 
   <section class="settings-section">
     <div class="section-title">Pool</div>
-    <FieldGroup id="cfg-clip-quota" label="Quota clips" desc="Nombre maximum de clips vidéo acceptés par participant" unit="clips" value={form.clipQuota}>
+    <FieldGroup id="cfg-clip-quota" label="Quota clips" desc="Nombre maximum de clips vidéo acceptés par participant" unit="clips">
       <input id="cfg-clip-quota" type="number" min="1" max="20" bind:value={form.clipQuota} />
     </FieldGroup>
     <div class="field-row">
@@ -158,7 +150,7 @@
 
   <section class="settings-section">
     <div class="section-title">Client broadcast</div>
-    <FieldGroup id="cfg-watchdog" label="Watchdog timeout" desc="Reload automatique du client si aucun ping reçu dans ce délai" unit="s" value={form.watchdogSec}>
+    <FieldGroup id="cfg-watchdog" label="Watchdog timeout" desc="Reload automatique du client si aucun ping reçu dans ce délai" unit="s">
       <input id="cfg-watchdog" type="number" min="5" bind:value={form.watchdogSec} />
     </FieldGroup>
   </section>
@@ -170,6 +162,33 @@
 </div>
 
 <style>
+  .settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    height: 36px;
+    border-bottom: 1px solid var(--border-dim);
+    flex-shrink: 0;
+  }
+
+  .settings-header__title {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+
+  .settings-header__status {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+  }
+
+  .settings-header__status--pending { color: var(--text-dim); }
+  .settings-header__status--saved   { color: var(--ready); }
+  .settings-header__status--error   { color: var(--danger); }
+
   .settings-body {
     display: flex;
     flex-direction: column;
@@ -182,11 +201,11 @@
   }
 
   .section-title {
-    font-size: 9px;
+    font-size: var(--font-size-sm);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--text-dim);
+    color: var(--text-muted);
     margin-bottom: 8px;
   }
 
@@ -198,14 +217,14 @@
   }
 
   .field-label {
-    font-size: 11px;
-    color: var(--text-muted);
+    font-size: var(--font-size-md);
+    color: var(--text);
     white-space: nowrap;
   }
 
   .error-bar {
     padding: 6px 12px;
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     color: var(--danger, #f44336);
   }
 </style>

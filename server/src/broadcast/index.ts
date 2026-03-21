@@ -51,8 +51,9 @@ export class BroadcastManager {
     this.pool = options.pool;
     this.cfg  = getJamConfig().broadcast;
 
-    this.schedule = this.loadSchedule();
-    this.state    = this.loadOrInitState();
+    this.schedule   = this.loadSchedule();
+    this.state      = this.loadOrInitState();
+    this.state.pool = this.pool.getStats(); // populate from DB on startup
 
     this.setupSocketHandlers();
     this.setupPoolListeners();

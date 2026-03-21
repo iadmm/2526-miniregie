@@ -67,7 +67,7 @@
     border: 1px solid transparent;
     border-radius: var(--radius);
     color: var(--text-dim);
-    font-size: 14px;
+    font-size: var(--font-size-md);
     line-height: 1;
     cursor: pointer;
     transition: color 0.1s, border-color 0.1s, background 0.1s;

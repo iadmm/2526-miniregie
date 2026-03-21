@@ -124,7 +124,7 @@
   }
 
   .tab-title {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -135,7 +135,7 @@
     background: none;
     border: none;
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: var(--font-size-md);
     cursor: pointer;
     padding: 2px 4px;
     border-radius: var(--radius);
@@ -149,14 +149,14 @@
     padding: 6px 12px;
     background: color-mix(in srgb, var(--live) 15%, transparent);
     color: var(--live);
-    font-size: 11px;
+    font-size: var(--font-size-base);
     flex-shrink: 0;
   }
 
   .loading,
   .empty {
     padding: 20px 12px;
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--text-dim);
     text-align: center;
   }
@@ -189,7 +189,7 @@
   }
 
   .participant-name {
-    font-size: 12px;
+    font-size: var(--font-size-md);
     font-weight: 600;
     color: var(--text);
     white-space: nowrap;
@@ -198,13 +198,13 @@
   }
 
   .participant-team {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     color: var(--text-muted);
   }
 
   .badge {
     display: inline-block;
-    font-size: 9px;
+    font-size: var(--font-size-xs);
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -236,7 +236,7 @@
   .admin-toggle input:disabled { cursor: not-allowed; opacity: 0.5; }
 
   .toggle-label {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;

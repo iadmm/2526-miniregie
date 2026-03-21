@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { socketState } from '../lib/socket.svelte.ts';
-  import { api } from '../lib/api.ts';
+  import { socketState } from '../../lib/socket.svelte.ts';
+  import { api } from '../../lib/api.ts';
   import type { AppId } from '@shared/types';
 
   const APPS: { id: AppId; label: string }[] = [
@@ -114,7 +114,7 @@
 
   .panic-panel__badge {
     font-family: var(--font-mono, monospace);
-    font-size: 9px;
+    font-size: var(--font-size-xs);
     font-weight: 700;
     letter-spacing: 0.08em;
     color: var(--live);
@@ -182,7 +182,7 @@
   }
 
   .panic-panel__label {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-family: var(--font-mono, monospace);
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -195,7 +195,7 @@
     border-radius: var(--radius);
     color: var(--text);
     font-family: var(--font, sans-serif);
-    font-size: 12px;
+    font-size: var(--font-size-md);
     padding: 8px;
     resize: none;
     line-height: 1.4;
@@ -218,7 +218,7 @@
     border-radius: var(--radius);
     color: var(--text);
     font-family: var(--font-mono, monospace);
-    font-size: 11px;
+    font-size: var(--font-size-base);
     padding: 5px 8px;
     appearance: none;
   }
@@ -226,7 +226,7 @@
   .panic-panel__clear {
     padding: 7px 0;
     font-family: var(--font-mono, monospace);
-    font-size: 11px;
+    font-size: var(--font-size-base);
     font-weight: 600;
     letter-spacing: 0.04em;
     color: var(--text-muted);
@@ -260,7 +260,7 @@
   }
 
   .panic-panel__status-label {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-family: var(--font-mono, monospace);
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -268,7 +268,7 @@
   }
 
   .panic-panel__status-value {
-    font-size: 11px;
+    font-size: var(--font-size-base);
     font-family: var(--font-mono, monospace);
     color: var(--text-muted);
   }

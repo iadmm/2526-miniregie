@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { login } from '../lib/auth.svelte.ts';
+  import { login } from '../../lib/auth.svelte.ts';
 
   let username = $state('');
   let password = $state('');
@@ -68,7 +68,7 @@
   }
 
   .logo {
-    font-size: 14px;
+    font-size: var(--font-size-md);
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -77,7 +77,7 @@
   }
 
   .subtitle {
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--text-dim);
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -85,7 +85,7 @@
   }
 
   .error {
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--danger);
     padding: 6px 8px;
     background: rgba(229, 57, 53, 0.1);
@@ -97,7 +97,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     color: var(--text);
-    font-size: 13px;
+    font-size: var(--font-size-md);
     font-family: var(--font);
     padding: 7px 10px;
     outline: none;
@@ -117,7 +117,7 @@
     color: #fff;
     border: none;
     border-radius: var(--radius);
-    font-size: 12px;
+    font-size: var(--font-size-md);
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;

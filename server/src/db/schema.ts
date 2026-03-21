@@ -20,7 +20,6 @@ export const mediaItems = sqliteTable('media_items', {
   id:            text('id').primaryKey(),
   type:          text('type').notNull().$type<MediaType>(),
   content:       text('content', { mode: 'json' }).notNull().$type<MediaContent>(),
-  priority:      integer('priority').notNull(), // internal ordering: pinned=999, interview=200, standard=100
   status:        text('status').notNull().$type<MediaStatus>(),
   submittedAt:   integer('submitted_at').notNull(),
   authorId:      text('author_id').notNull().references(() => participants.id),

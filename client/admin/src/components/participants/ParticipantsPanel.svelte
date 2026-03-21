@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { auth } from '../lib/auth.svelte.ts';
-  import { api } from '../lib/api.ts';
+  import { auth } from '../../lib/auth.svelte.ts';
+  import { api } from '../../lib/api.ts';
   import type { Participant } from '@shared/types';
 
   let participants = $state<Participant[]>([]);
@@ -164,7 +164,7 @@
     border: 1px solid var(--border-dim);
     border-radius: var(--radius);
     color: var(--text);
-    font-size: 11px;
+    font-size: var(--font-size-base);
     padding: 4px 8px;
     font-family: var(--font, sans-serif);
   }
@@ -178,7 +178,7 @@
     background: none;
     border: none;
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: var(--font-size-md);
     cursor: pointer;
     padding: 0 4px;
     border-radius: var(--radius);
@@ -190,7 +190,7 @@
 
   .participants-panel__error {
     padding: 5px 10px;
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--live);
     background: rgba(229, 57, 53, 0.08);
     flex-shrink: 0;
@@ -205,7 +205,7 @@
 
   .participants-panel__empty {
     padding: 24px;
-    font-size: 11px;
+    font-size: var(--font-size-base);
     color: var(--text-dim);
     text-align: center;
   }
@@ -234,7 +234,7 @@
   }
 
   .participant-row__name {
-    font-size: 12px;
+    font-size: var(--font-size-md);
     font-weight: 600;
     color: var(--text);
     white-space: nowrap;
@@ -250,12 +250,12 @@
   }
 
   .participant-row__team {
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     color: var(--text-muted);
   }
 
   .tag {
-    font-size: 9px;
+    font-size: var(--font-size-xs);
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -276,7 +276,7 @@
 
   .action-btn {
     font-family: var(--font-mono, monospace);
-    font-size: 10px;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     padding: 3px 8px;
     border-radius: var(--radius);

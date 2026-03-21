@@ -21,6 +21,7 @@ import type { MediaStatus, AppId, MediaItem, JamConfig, AuthorStats } from "@sha
 import type { BroadcastManager } from "../broadcast";
 import type { PoolManager } from "../pool";
 import { getJamConfig, updateJamConfig } from "../jam-config.js";
+import { applyDevSeed } from "../db/dev-seed.js";
 
 const VALID_STATUSES: MediaStatus[] = ["pending", "ready", "evicted"];
 const ADMIN_AUTHOR: MediaItem["author"] = {
@@ -60,6 +61,7 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
 
   router.post("/jam/reset", (_req, res) => {
     broadcast.reset();
+    applyDevSeed();
     res.json({ ok: true });
   });
 

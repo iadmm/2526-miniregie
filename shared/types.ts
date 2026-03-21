@@ -201,9 +201,8 @@ export interface ScheduleEntry {
 
 export interface JamConfig {
   jam: {
-    startAt:             string; // ISO 8601 — informational, JAM_START is a manual admin action
-    endsAt:              string; // ISO 8601 — used by startJam()
-    countdownDurationMs: number; // ms — visual countdown timer duration in countdown-to-jam app
+    startAt: string; // ISO 8601 — informational, JAM_START is a manual admin action
+    endsAt:  string; // ISO 8601 — used by startJam()
   };
   broadcast: {
     transitionFailsafeMs:   number; // ms — max wait for client ack before forcing transition
