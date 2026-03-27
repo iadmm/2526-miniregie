@@ -119,13 +119,24 @@ export class BroadcastManager {
     return earliest;
   }
 
-  startJam(endsAt = new Date(getJamConfig().jam.endsAt).getTime()): void {
+  startJam(): void {
     const result = validateJamTransition(this.state.jam.status, 'running');
-    if (!result.ok) {
-      console.warn(`[broadcast] JAM_START rejected: ${result.error}`);
-      return;
-    }
-    this.state.jam = { status: 'running', startedAt: Date.now(), endsAt, timeRemaining: endsAt - Date.now() };
+    if (!result.ok) throw new Error(result.error);
+
+    const endEntry = getScheduleEntries().find(e => e.app === 'end-of-countdown');
+    if (!endEntry) throw new Error('No end-of-countdown entry in schedule — add an absolute timestamp entry first');
+
+    const condition = parseScheduleEntry(endEntry.at);
+    if (condition.at === 'T-') throw new Error('end-of-countdown cannot use T- format (circular dependency on endsAt)');
+
+    const startedAt = Date.now();
+    const endsAt = condition.at === 'absolute'
+      ? new Date(condition.value).getTime()
+      : startedAt + condition.value; // H+
+
+    if (isNaN(endsAt) || endsAt <= startedAt) throw new Error('end-of-countdown resolves to a past or invalid time');
+
+    this.state.jam = { status: 'running', startedAt, endsAt, timeRemaining: endsAt - startedAt };
     this.logEvent('jam_state_change', { from: 'idle', to: 'running' });
     this.emitState();
     this.dispatch({ type: 'market', appId: 'countdown-to-jam', source: 'system' });

@@ -106,6 +106,15 @@ export interface AuthorStats {
 export type JamStatus = 'idle' | 'running' | 'ended';
 export type AppId = string;
 
+export const KNOWN_APPS = [
+  'pre-jam-idle',
+  'countdown-to-jam',
+  'jam-mode',
+  'micro-trottoir',
+  'end-of-countdown',
+  'post-jam-idle',
+] as const satisfies AppId[];
+
 export interface GlobalState {
   jam: {
     status: JamStatus;
@@ -202,10 +211,7 @@ export interface ScheduleEntry {
 // ─── JAM config (config/jam.json) ─────────────────────────────────────────────
 
 export interface JamConfig {
-  jam: {
-    startAt: string; // ISO 8601 — informational, JAM_START is a manual admin action
-    endsAt:  string; // ISO 8601 — used by startJam()
-  };
+  jam: Record<string, never>; // JAM timing is managed entirely via the schedule
   broadcast: {
     transitionFailsafeMs:   number; // ms — max wait for client ack before forcing transition
     statePersistIntervalMs: number; // ms — interval between state.json writes

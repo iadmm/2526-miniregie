@@ -3,4 +3,8 @@
 	--space-sm: 0.75rem;
 	--space-md: 1rem;
 	--space-lg: 1.5rem;
+
+	/* Broadcast */
+	--color-broadcast-bg: #08090b;
+	--color-broadcast-fg: #f0f0f0;
 }

@@ -23,7 +23,7 @@ vi.mock('../db/index.js', () => ({}));
 
 vi.mock('../jam-config.js', () => ({
   getJamConfig: () => ({
-    jam:       { startAt: '2026-03-01T09:00:00.000Z', endsAt: '2026-03-03T09:00:00.000Z', countdownDurationMs: 600_000 },
+    jam:       {},
     broadcast: { transitionFailsafeMs: 3_000, statePersistIntervalMs: 30_000, postJamIdleDelayMs: 300_000 },
     pool:      { clipQuotaPerParticipant: 3 },
     client:    { watchdogTimeoutMs: 30_000 },

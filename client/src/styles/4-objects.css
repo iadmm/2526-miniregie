@@ -4,3 +4,10 @@
 	justify-content: center;
 	min-height: 100dvh;
 }
+
+.o-broadcast {
+	background: var(--color-broadcast-bg);
+	color: var(--color-broadcast-fg);
+	width: 100%;
+	height: 100dvh;
+}

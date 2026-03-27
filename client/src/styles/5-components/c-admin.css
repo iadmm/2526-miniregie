@@ -1,0 +1,144 @@
+.c-admin {
+	padding: var(--space-lg);
+	max-width: 640px;
+}
+
+.c-admin__section {
+	margin-block-start: var(--space-lg);
+}
+
+.c-admin__label {
+	opacity: 0.5;
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.c-admin__dl {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 0.3rem var(--space-md);
+	margin-block-start: var(--space-xs);
+}
+
+.c-admin__controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-xs);
+	margin-block-start: var(--space-xs);
+}
+
+.c-admin__error {
+	color: red;
+	font-size: 0.85rem;
+	margin-block-start: var(--space-xs);
+}
+
+/* ─── Schedule ─────────────────────────────────────────────────────────────── */
+
+.c-schedule {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.85rem;
+	margin-block-start: var(--space-xs);
+}
+
+.c-schedule th {
+	text-align: left;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	opacity: 0.4;
+	padding-block-end: var(--space-xs);
+	border-bottom: 1px solid currentColor;
+}
+
+.c-schedule td {
+	padding-block: 0.35rem;
+	padding-inline-end: var(--space-sm);
+	vertical-align: middle;
+}
+
+.c-schedule__row[data-status='fired'] { opacity: 0.45; }
+.c-schedule__row[data-status='skipped'] { opacity: 0.35; }
+
+.c-schedule__dot {
+	display: inline-block;
+	width: 0.45em;
+	height: 0.45em;
+	border-radius: 50%;
+	background: currentColor;
+	opacity: 0.4;
+}
+
+.c-schedule__row[data-status='pending'] .c-schedule__dot { color: #1ac0d7; opacity: 1; }
+.c-schedule__row[data-status='fired']   .c-schedule__dot { color: #4caf80; opacity: 1; }
+
+.c-schedule__at {
+	font-family: monospace;
+}
+
+.c-schedule__resolved {
+	opacity: 0.5;
+	font-size: 0.8em;
+	margin-inline-start: 0.3em;
+}
+
+.c-schedule__app { font-family: monospace; font-size: 0.8em; }
+
+.c-schedule__label-cell { opacity: 0.55; }
+
+.c-schedule__actions {
+	display: flex;
+	gap: 0.25rem;
+	white-space: nowrap;
+}
+
+.c-schedule__btn {
+	font-size: 0.8rem;
+	padding: 0.2rem 0.5rem;
+}
+
+.c-schedule__btn--ghost { opacity: 0.6; }
+.c-schedule__btn--ghost:hover:not(:disabled) { opacity: 1; }
+.c-schedule__btn--danger:hover:not(:disabled) { color: #e55; opacity: 1; }
+
+.c-schedule__empty {
+	opacity: 0.4;
+	font-size: 0.85rem;
+	margin-block-start: var(--space-xs);
+}
+
+.c-schedule__add-btn {
+	margin-block-start: var(--space-xs);
+}
+
+.c-schedule__add-form {
+	margin-block-start: var(--space-xs);
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-xs);
+}
+
+.c-schedule__add-actions {
+	display: flex;
+	gap: var(--space-xs);
+}
+
+/* ─── Schedule form fields ─────────────────────────────────────────────────── */
+
+.c-schedule-form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	align-items: center;
+}
+
+.c-schedule-form__select,
+.c-schedule-form__input {
+	padding: 0.2rem 0.4rem;
+	font-size: 0.85rem;
+}
+
+.c-schedule-form__input--short { width: 7rem; }
+.c-schedule-form__select--app  { width: 11rem; }

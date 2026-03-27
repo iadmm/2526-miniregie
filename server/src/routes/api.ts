@@ -39,19 +39,13 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
 
   // ─── JAM control ─────────────────────────────────────────────────────────────
 
-  router.post("/jam/start", (req, res) => {
-    const { endsAt } = req.body as { endsAt?: unknown };
-    // If endsAt provided, validate it; otherwise use config default
-    if (endsAt !== undefined) {
-      if (typeof endsAt !== "number" || endsAt <= Date.now()) {
-        res.status(400).json({ error: "endsAt must be a future timestamp (ms)" });
-        return;
-      }
-      broadcast.startJam(endsAt);
-    } else {
-      broadcast.startJam(); // uses config/jam.json endsAt
+  router.post("/jam/start", (_req, res) => {
+    try {
+      broadcast.startJam();
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
     }
-    res.json({ ok: true });
   });
 
   router.post("/jam/end", (_req, res) => {

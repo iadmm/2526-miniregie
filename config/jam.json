@@ -1,9 +1,6 @@
 {
   "_note": "JAM configuration — update before each event. Durations in milliseconds.",
-  "jam": {
-    "startAt": "2026-03-21T10:00:00.000Z",
-    "endsAt": "2026-03-22T15:00:00.000Z"
-  },
+  "jam": {},
   "broadcast": {
     "transitionFailsafeMs": 3000,
     "statePersistIntervalMs": 30000,

@@ -23,5 +23,10 @@
     "_note": "return to jam-mode 1h before end",
     "at": "T-01:00:00",
     "app": "jam-mode"
+  },
+  {
+    "_note": "JAM end — UPDATE THIS to the actual end time before the event. This drives all T- triggers.",
+    "at": "H+48:00:00",
+    "app": "end-of-countdown"
   }
 ]
