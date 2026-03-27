@@ -129,7 +129,7 @@ export class PoolManager extends EventEmitter {
   // ─── Stats (for GlobalState) ────────────────────────────────────────────────
 
   getStats(holdCount = 0): GlobalState['pool'] {
-    const rows = getReadyItems({ excludeTypes: ['ticker'] });
+    const rows = getReadyItems();
     const byType: Record<string, number> = {};
     for (const row of rows) byType[row.type] = (byType[row.type] ?? 0) + 1;
     return {

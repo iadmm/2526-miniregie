@@ -3,6 +3,7 @@
 	import JamControls from '$lib/components/JamControls.svelte';
 	import ScheduleControl from '$lib/components/ScheduleControl.svelte';
 	import BroadcastPreview from '$lib/components/BroadcastPreview.svelte';
+	import PoolView from '$lib/components/PoolView.svelte';
 </script>
 
 <main class="c-admin">
@@ -11,4 +12,6 @@
 	<JamControls />
 	<ScheduleControl />
 	<BroadcastPreview />
+	<PoolView />
+
 </main>

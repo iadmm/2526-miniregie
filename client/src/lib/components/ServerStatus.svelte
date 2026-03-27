@@ -72,7 +72,7 @@ const connected = $derived(serverState.connected);
 
 		{#if pool}
 			<dt>Pool</dt>
-			<dd>{pool.total} total / {pool.queueSnapshot.length} ready</dd>
+			<dd>{pool.total} ready</dd>
 		{/if}
 	</dl>
 </section>
