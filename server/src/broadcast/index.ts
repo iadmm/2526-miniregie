@@ -3,12 +3,12 @@ import type { Server } from 'socket.io';
 import { validateJamTransition } from './jam-state.js';
 import { insertBroadcastEvent, resetAllMedia } from '../db/queries.js';
 import type { GlobalState, MarketTrigger, AppId, App } from "@shared/types";
-import type { PoolManager } from '../pool/index.js';
+import type { PoolManager } from "../pool";
 import { getJamConfig } from '../jam-config.js';
 import { ScheduleService } from './schedule.js';
 import { loadState, buildInitialState, saveState, type PersistedState } from './persistence.js';
 import { AppManager } from '../apps/app-manager.js';
-import { JamModeApp } from '../apps/jam-mode/index.js';
+import { JamModeApp } from "../apps/jam-mode";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -17,9 +17,9 @@ const TICK_MS    = 1_000;
 
 // ─── App factory ─────────────────────────────────────────────────────────────
 
-function createApp(appId: AppId): App {
+function createApp(appId: AppId, pool: PoolManager): App {
   switch (appId) {
-    case 'jam-mode': return new JamModeApp();
+    case 'jam-mode': return new JamModeApp(pool);
     default: return {
       id: appId,
       outroMode: 'none',
@@ -190,7 +190,7 @@ export class BroadcastManager {
     this.state.broadcast.activeApp  = trigger.appId;
     this.emitState();
 
-    await this.apps.transition(createApp(trigger.appId));
+    await this.apps.transition(createApp(trigger.appId, this.pool));
 
     // Wait for client ack or failsafe timeout
     await this.waitForTransitionAck();
