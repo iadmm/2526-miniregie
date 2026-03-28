@@ -208,6 +208,42 @@ export interface ScheduleEntry {
   modifiedAt: number;
 }
 
+// ─── Scene ────────────────────────────────────────────────────────────────────
+
+export type LayoutName =
+  | 'IDLE'
+  | 'MEDIA_FULL'
+  | 'VISUAL_FULL'
+  | 'NOTE_CARD'
+  | 'MEDIA_WITH_VISUAL'
+  | 'MEDIA_WITH_CAPTION'
+  | 'MEDIA_VIS_CAP'
+  | 'VISUAL_WITH_CAPTION'
+  | 'DUAL_VISUAL';
+
+export interface LoudSlot {
+  kind: 'loud';
+  item: MediaItem;
+  startedAt: number;
+  maxEndsAt: number; // startedAt + min(duration, 10 min)
+}
+
+export interface FillerSlot {
+  kind: 'filler';
+}
+
+export interface SilentSlot {
+  item: MediaItem;
+  startedAt: number;
+  endsAt: number;
+}
+
+export interface ActiveScene {
+  loud: LoudSlot | FillerSlot | null;
+  silents: SilentSlot[]; // max 2
+  layout: LayoutName;
+}
+
 // ─── JAM config (config/jam.json) ─────────────────────────────────────────────
 
 export interface JamConfig {

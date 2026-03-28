@@ -1,15 +1,6 @@
-import type { MediaItem, MediaContent } from '../../../../shared/types.js';
+import type { MediaItem, MediaContent, LayoutName } from '../../../../shared/types.js';
 
-export type LayoutName =
-  | 'IDLE'
-  | 'MEDIA_FULL'
-  | 'VISUAL_FULL'
-  | 'NOTE_CARD'
-  | 'MEDIA_WITH_VISUAL'
-  | 'MEDIA_WITH_CAPTION'
-  | 'MEDIA_VIS_CAP'
-  | 'VISUAL_WITH_CAPTION'
-  | 'DUAL_VISUAL';
+export type { LayoutName };
 
 type Item = Pick<MediaItem, 'type' | 'content'>;
 

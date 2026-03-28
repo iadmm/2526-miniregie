@@ -1,0 +1,58 @@
+/* ─── c-scene-queues ────────────────────────────────────────────────────────── */
+
+.c-scene-queues__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+}
+
+.c-scene-queues__queues {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: var(--space-sm);
+	margin-block-start: var(--space-sm);
+}
+
+.c-scene-queues__queue-label {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	opacity: 0.4;
+	margin-block-end: 0.3rem;
+}
+
+.c-scene-queues__row {
+	display: flex;
+	gap: 0.5rem;
+	font-size: 0.85rem;
+	padding-block: 0.2rem;
+	border-bottom: 1px solid currentColor;
+	opacity: 0.15;
+}
+
+.c-scene-queues__row:last-child {
+	border-bottom: none;
+}
+
+.c-scene-queues__row--active  { opacity: 1; }
+.c-scene-queues__row--pending { opacity: 0.7; }
+
+.c-scene-queues__type {
+	font-family: monospace;
+	font-size: 0.75em;
+	opacity: 0.6;
+	min-width: 4rem;
+}
+
+.c-scene-queues__label {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.c-scene-queues__meta {
+	opacity: 0.4;
+	font-size: 0.8em;
+	white-space: nowrap;
+}

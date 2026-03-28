@@ -7,6 +7,7 @@ import './db/index.js';
 
 import { PoolManager } from "./pool";
 import { BroadcastManager } from "./broadcast";
+import { SceneManager } from "./queue/scene-manager.js";
 
 import authRouter            from './routes/auth.js';
 import createApiRouter       from './routes/api.js';
@@ -36,6 +37,10 @@ const pool = new PoolManager({
 const broadcast = new BroadcastManager({ io, pool });
 broadcastRef = broadcast;
 
+const scene = new SceneManager(pool, {
+  getJamStatus: () => broadcastRef.getState().jam.status,
+});
+
 // ─── Static file serving ──────────────────────────────────────────────────────
 
 const UPLOAD_DIR = process.env['UPLOAD_DIR'] ?? './uploads';
@@ -44,7 +49,7 @@ app.use('/uploads', express.static(UPLOAD_DIR));
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 app.use('/auth',          authRouter);
-app.use('/api',           createApiRouter(broadcast, pool));
+app.use('/api',           createApiRouter(broadcast, pool, scene));
 app.use('/api/schedule',  createScheduleRouter(broadcast));
 app.use('/api/queue',     createQueueRouter(pool));
 // Mount participant API at /go/api so it doesn't conflict with the static /go SPA
@@ -56,8 +61,16 @@ app.get('/health', (_req, res) => {
 
 // ─── Heartbeat for broadcast client watchdog ──────────────────────────────────
 
+// Forward scene updates to all connected clients
+scene.on('scene:update', (activeScene) => {
+  io.emit('scene:update', activeScene);
+});
+
 io.on('connection', (socket) => {
   console.log(`client connected: ${socket.id}`);
+
+  // Send current scene on connect
+  socket.emit('scene:update', scene.getScene());
 
   const pingInterval = setInterval(() => {
     socket.emit('ping');
@@ -74,6 +87,13 @@ io.on('connection', (socket) => {
       const ids = raw.activeItemIds.filter((x): x is string => typeof x === 'string');
       const regime = raw.regime === 'hold' ? 'hold' : raw.regime === 'buffer' ? 'buffer' : 'normal';
       broadcast.updateJamMode(ids, regime);
+    }
+  });
+
+  // Broadcast client reports loud media ended naturally
+  socket.on('scene:loud:ended', (data: { itemId: string }) => {
+    if (typeof data?.itemId === 'string') {
+      scene.onLoudEnded(data.itemId);
     }
   });
 
@@ -109,11 +129,13 @@ io.on('connection', (socket) => {
 
 process.on('SIGTERM', () => {
   broadcast.destroy();
+  scene.destroy();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   broadcast.destroy();
+  scene.destroy();
   process.exit(0);
 });
 

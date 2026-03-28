@@ -20,6 +20,7 @@ import {
 import type { MediaStatus, AppId, MediaItem, JamConfig, AuthorStats } from "@shared/types";
 import type { BroadcastManager } from "../broadcast";
 import type { PoolManager } from "../pool";
+import type { SceneManager } from "../queue/scene-manager.js";
 import { getJamConfig, updateJamConfig } from "../jam-config.js";
 import { applyDevSeed } from "../db/dev-seed.js";
 
@@ -31,7 +32,7 @@ const ADMIN_AUTHOR: MediaItem["author"] = {
   role: "admin",
 };
 
-export default function createApiRouter(broadcast: BroadcastManager, pool: PoolManager): Router {
+export default function createApiRouter(broadcast: BroadcastManager, pool: PoolManager, scene: SceneManager): Router {
   const router = Router();
 
   // All API routes require admin role
@@ -42,6 +43,7 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
   router.post("/jam/start", (_req, res) => {
     try {
       broadcast.startJam();
+      scene.onJamStart();
       res.json({ ok: true });
     } catch (err) {
       res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
@@ -61,6 +63,13 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
 
   router.post("/jam/panic", (_req, res) => {
     broadcast.panic("manual");
+    res.json({ ok: true });
+  });
+
+  // ─── Scene control ────────────────────────────────────────────────────────────
+
+  router.post("/scene/reset", (_req, res) => {
+    scene.forceReset();
     res.json({ ok: true });
   });
 

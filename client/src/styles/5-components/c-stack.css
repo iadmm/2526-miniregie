@@ -1,0 +1,36 @@
+/* ─── c-stack ────────────────────────────────────────────────────────────────
+   Flex layout primitive.
+   Usage: <div class="c-stack c-stack--row c-stack--gap-sm c-stack--align-center">
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.c-stack {
+	display: flex;
+}
+
+/* ── Direction ── */
+.c-stack--row    { flex-direction: row; }
+.c-stack--column { flex-direction: column; }
+
+/* ── Wrap ── */
+.c-stack--wrap { flex-wrap: wrap; }
+
+/* ── Gap ── */
+.c-stack--gap-2xs { gap: var(--space-2xs); }
+.c-stack--gap-xs  { gap: var(--space-xs); }
+.c-stack--gap-sm  { gap: var(--space-sm); }
+.c-stack--gap-md  { gap: var(--space-md); }
+.c-stack--gap-lg  { gap: var(--space-lg); }
+.c-stack--gap-xl  { gap: var(--space-xl); }
+
+/* ── Align items ── */
+.c-stack--align-start    { align-items: flex-start; }
+.c-stack--align-center   { align-items: center; }
+.c-stack--align-end      { align-items: flex-end; }
+.c-stack--align-baseline { align-items: baseline; }
+.c-stack--align-stretch  { align-items: stretch; }
+
+/* ── Justify content ── */
+.c-stack--justify-start   { justify-content: flex-start; }
+.c-stack--justify-center  { justify-content: center; }
+.c-stack--justify-end     { justify-content: flex-end; }
+.c-stack--justify-between { justify-content: space-between; }

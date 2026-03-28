@@ -1,0 +1,91 @@
+/* ─── Pool view ────────────────────────────────────────────────────────────── */
+
+.c-pool__empty {
+	opacity: 0.4;
+	font-size: 0.85rem;
+	margin-block-start: var(--space-xs);
+}
+
+.c-pool__loading {
+	opacity: 0.4;
+	font-size: 0.85rem;
+	margin-inline-start: var(--space-xs);
+}
+
+/* ─── Table ────────────────────────────────────────────────────────────────── */
+
+.c-pool__table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.82rem;
+	margin-block-start: var(--space-xs);
+}
+
+.c-pool__table th {
+	text-align: left;
+	font-size: 0.72rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	opacity: 0.4;
+	padding-block-end: var(--space-xs);
+	border-bottom: 1px solid currentColor;
+	white-space: nowrap;
+}
+
+.c-pool__table td {
+	padding-block: 0.35rem;
+	padding-inline-end: var(--space-sm);
+	vertical-align: middle;
+}
+
+.c-pool__row[data-status='played']  { opacity: 0.4; }
+.c-pool__row[data-status='evicted'] { opacity: 0.25; text-decoration: line-through; }
+.c-pool__row[data-status='pending'] { opacity: 0.6; font-style: italic; }
+.c-pool__row[data-active]           { background: rgba(26, 192, 215, 0.07); }
+
+.c-pool__pos {
+	font-family: monospace;
+	opacity: 0.5;
+	width: 1.5rem;
+}
+
+.c-pool__status {
+	font-family: monospace;
+	font-size: 0.78em;
+	white-space: nowrap;
+	opacity: 0.6;
+}
+
+.c-pool__type {
+	font-family: monospace;
+	font-size: 0.82em;
+	opacity: 0.7;
+	white-space: nowrap;
+}
+
+.c-pool__author {
+	white-space: nowrap;
+	max-width: 7rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	opacity: 0.75;
+}
+
+.c-pool__col-preview {
+	width: 99%;
+}
+
+.c-pool__preview {
+	opacity: 0.7;
+	max-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.c-pool__time {
+	font-family: monospace;
+	font-size: 0.78em;
+	opacity: 0.45;
+	white-space: nowrap;
+}
