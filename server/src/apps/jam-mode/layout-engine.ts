@@ -102,9 +102,11 @@ export interface SlotAssignment {
 export function assignSlots(layout: LayoutName, queues: LayoutQueues): SlotAssignment {
   const req    = LAYOUT_REQUIREMENTS[layout];
   const result: SlotAssignment = {};
-  if (req.loud   >= 1) result.loud    = queues.loud[0];
-  if (req.visual >= 1) result.visual  = queues.visual[0];
-  if (req.visual >= 2) result.visual2 = queues.visual[1];
-  if (req.note   >= 1) result.note    = queues.note[0];
+  // Non-null assertions are safe: resolveLayout only selects a layout when
+  // req.X <= queue.length, so queue[0]/[1] are always defined here.
+  if (req.loud   >= 1) result.loud    = queues.loud[0]!;
+  if (req.visual >= 1) result.visual  = queues.visual[0]!;
+  if (req.visual >= 2) result.visual2 = queues.visual[1]!;
+  if (req.note   >= 1) result.note    = queues.note[0]!;
   return result;
 }
