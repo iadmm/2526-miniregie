@@ -69,7 +69,7 @@
 	.c-slot-chyron__flag span {
 		display: block;
 		font-family: var(--font-editorial, 'Schibsted Grotesk', sans-serif);
-		font-size: clamp(5px, 0.68vw, 7.5px);
+		font-size: var(--bcast-fz-fine, 8px);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -97,7 +97,7 @@
 	.c-slot-chyron__name {
 		display: block;
 		font-family: var(--font-display, 'Fraunces', serif);
-		font-size: clamp(7px, 0.82vw, 9px);
+		font-size: var(--bcast-fz-base, 12px);
 		font-weight: 400;
 		font-style: normal;
 		color: #0a0a0a;
@@ -109,9 +109,9 @@
 	.c-slot-chyron__meta {
 		display: block;
 		font-family: var(--font-editorial, 'Schibsted Grotesk', sans-serif);
-		font-size: clamp(4.5px, 0.56vw, 6.5px);
+		font-size: var(--bcast-fz-fine, 8px);
 		font-weight: 400;
-		color: rgba(10, 10, 10, 0.52);
+		color: rgba(0, 0, 0, 0.62);
 		line-height: 1;
 		white-space: nowrap;
 		letter-spacing: 0.04em;

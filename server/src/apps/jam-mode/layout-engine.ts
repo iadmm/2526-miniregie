@@ -86,7 +86,7 @@ function extractAR(item: MediaItem | undefined): number | null {
 }
 
 function arFit(ar: number | null, range: AspectRange): number {
-  if (ar === null) return 0.15; // no AR data — allow with low probability (content may match)
+  if (ar === null) return 0; // unknown AR → never pick an aspect-specific layout
   const inRange = (range.min === undefined || ar >= range.min)
                && (range.max === undefined || ar <= range.max);
   return inRange ? 3.0 : 0; // known mismatch → never selected

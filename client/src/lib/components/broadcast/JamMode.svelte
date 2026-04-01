@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { serverState } from '$lib/server-state.svelte';
-	import type { JamSlots } from '$lib/server-state.svelte';
 	import type { MediaItem } from '@shared/types';
 	import {
 		YoutubeMedia,
@@ -18,6 +17,7 @@
 	import LowerThird from './LowerThird.svelte';
 	import SlotChyron from './SlotChyron.svelte';
 	import Ticker from './Ticker.svelte';
+	import Branding from "$lib/components/broadcast/Branding.svelte";
 
 	const jamLayout  = $derived(serverState.jamLayout);
 	const jamSlots   = $derived(serverState.jamSlots);
@@ -156,6 +156,7 @@
 	</div>
 
 	<!-- Persistent chrome — lives above layout transitions -->
+	<Branding />
 	<Ticker />
 	<LowerThird
 		visible={effectiveLt !== null}
@@ -163,6 +164,4 @@
 		name={effectiveLt?.name ?? ''}
 		role={effectiveLt?.role ?? ''}
 	/>
-
-	<div class="c-broadcast-screen__debug" aria-hidden="true">{jamLayout ?? 'IDLE'}</div>
 </div>

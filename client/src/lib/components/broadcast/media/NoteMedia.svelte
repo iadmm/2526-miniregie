@@ -23,11 +23,18 @@
 {/key}
 
 <style>
-	/* Transparent container — the broadcast background shows through */
+	/* Container query context — cqw resolves against this slot's width.
+	 * Scoped font tokens here so cqw values are valid (not available in :root). */
 	.c-note-slot {
 		position: relative;
 		width: 100%;
 		height: 100%;
+		container-type: inline-size;
+
+		--note-fz-eyebrow: clamp(7px,  0.75cqw, 12px);
+		--note-fz-body:    clamp(13px, 1.55cqw, 28px);
+		--note-fz-author:  clamp(10px, 1.05cqw, 20px);
+		--note-fz-team:    clamp(6px,  0.65cqw, 10px);
 	}
 
 	/* White editorial card — centered above geometric center (Tschichold) */
@@ -36,8 +43,8 @@
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -54%);
-		max-width: 58%;
-		max-height: 72%;
+		max-width: 76%;
+		max-height: 82%;
 		overflow: hidden;
 		background: var(--color-surface, #f8f7f5);
 		padding: clamp(20px, 3.2vw, 40px) clamp(24px, 3.8vw, 48px);
@@ -46,29 +53,28 @@
 	/* Eyebrow — "Note", ghost label above the body */
 	.c-note-card__eyebrow {
 		font-family: var(--font-editorial, 'Schibsted Grotesk', sans-serif);
-		font-size: var(--broadcast-fz-xs, clamp(5px, 0.72vw, 7px));
+		font-size: var(--note-fz-eyebrow);
 		font-weight: 400;
-		color: rgba(0, 0, 0, 0.35);
+		color: rgba(0, 0, 0, 0.50);
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
-		margin-bottom: clamp(10px, 1.4vw, 16px);
-		/* Reveal: clip from top downward */
+		margin-bottom: clamp(10px, 1.4cqw, 16px);
 		animation: note-eyebrow-in 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
 	}
 
-	/* Body text — primary voice of the participant */
+	/* Body text — primary voice of the participant.
+	 * cqw resolves against .c-note-slot width → adapts in narrow companion slots. */
 	.c-note-card__text {
 		font-family: var(--font-editorial, 'Schibsted Grotesk', sans-serif);
-		font-size: clamp(16px, 1.55vw, 40px);
+		font-size: var(--note-fz-body);
 		font-weight: 400;
 		font-style: normal;
-		color: rgba(0, 0, 0, 0.84);
+		color: rgba(0, 0, 0, 0.88);
 		line-height: 1.5;
 		letter-spacing: -0.01em;
 		margin: 0;
 		padding: 0;
 		quotes: none;
-		/* Reveal: translate up from below, clipped */
 		animation: note-text-in 560ms cubic-bezier(0.16, 1, 0.3, 1) 60ms both;
 	}
 
@@ -76,9 +82,8 @@
 	.c-note-card__attribution {
 		display: flex;
 		flex-direction: column;
-		gap: clamp(2px, 0.3vw, 4px);
-		margin-top: clamp(14px, 2vw, 22px);
-		/* Slides up 7px after text, per spec */
+		gap: clamp(2px, 0.3cqw, 4px);
+		margin-top: clamp(12px, 1.8cqw, 22px);
 		animation: note-attr-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 280ms both;
 	}
 
@@ -86,21 +91,21 @@
 	.c-note-card__author {
 		display: block;
 		font-family: var(--font-display, 'Fraunces', serif);
-		font-size: clamp(13px, 1.10vw, 28px);
+		font-size: var(--note-fz-author);
 		font-weight: 300;
 		font-style: normal;
-		color: rgba(0, 0, 0, 0.60);
+		color: rgba(0, 0, 0, 0.70);
 		letter-spacing: 0.01em;
 		line-height: 1;
 	}
 
-	/* Team — ghost metadata, above the 28% floor for dark-on-white */
+	/* Team — secondary metadata */
 	.c-note-card__team {
 		display: block;
 		font-family: var(--font-editorial, 'Schibsted Grotesk', sans-serif);
-		font-size: clamp(5px, 0.65vw, 7px);
+		font-size: var(--note-fz-team);
 		font-weight: 400;
-		color: rgba(0, 0, 0, 0.38);
+		color: rgba(0, 0, 0, 0.52);
 		letter-spacing: 0.10em;
 		text-transform: uppercase;
 		line-height: 1;

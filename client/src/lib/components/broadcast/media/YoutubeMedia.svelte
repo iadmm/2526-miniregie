@@ -41,15 +41,28 @@
 		position: relative;
 		width: 100%;
 		height: 100%;
-		background: #000;
+		/* container-type: size enables cqw/cqh for cover calculation */
+		container-type: size;
+		background: var(--color-broadcast-bg, #06080d);
 		overflow: hidden;
 	}
 
 	.c-media-youtube__frame {
+		/*
+		 * Cover strategy: ensure the 16:9 iframe always fills the slot,
+		 * regardless of slot aspect ratio. Overflows are clipped by parent.
+		 *   - If slot is narrower than 16:9: width = 100cqw keeps width,
+		 *     but height needs 100cqw × 9/16. min-height: 100cqh ensures cover.
+		 *   - If slot is taller than 16:9: height = 100cqh keeps height,
+		 *     but width needs 100cqh × 16/9. min-width: 100cqw ensures cover.
+		 * Result: no black bars in any slot geometry.
+		 */
 		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
+		width:  max(100cqw, calc(100cqh * 16 / 9));
+		height: max(100cqh, calc(100cqw *  9 / 16));
+		top:  50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
 		border: none;
 	}
 

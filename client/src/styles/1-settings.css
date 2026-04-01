@@ -36,18 +36,38 @@
 	--fw-medium:  500;
 	--fw-bold:    700;
 
-	/* ── Type scale broadcast — calibrated for Full HD 1920×1080 ── */
-	/* vw values control size at target resolution; maxes cap at ~2560px */
-	--broadcast-fz-2xs: clamp(9px,  0.72vw, 20px);
-	--broadcast-fz-xs:  clamp(10px, 0.85vw, 24px);
-	--broadcast-fz-sm:  clamp(12px, 1.10vw, 30px);
-	--broadcast-fz-md:  clamp(14px, 1.50vw, 40px);
-	--broadcast-fz-lg:  clamp(15px, 1.55vw, 42px);
-	--broadcast-fz-xl:  clamp(24px, 3.20vw, 80px);
+	/* ── Broadcast type scale ── Full HD 1920×1080 target ────────────────────
+	 *
+	 * vw is fluid; the max caps the size for the target resolution.
+	 * At 1920px (1vw = 19.2px) all tokens hit their max:
+	 *   fine=8  small=10  base=12  mid=16  name=24
+	 *
+	 * Semantic mapping:
+	 *   fine  — tags, flags, dot labels (ticker flag, lower-third tag, chyron flag)
+	 *   small — ticker text, clock, eyebrow meta
+	 *   base  — role, secondary attribution, chyron caption
+	 *   mid   — general body in chrome blocks
+	 *   name  — person names, Fraunces lower-third / chyron
+	 *
+	 * Note-card sizes live in .c-note-slot as scoped --note-fz-* cqw tokens.
+	 */
+	--bcast-fz-fine:  clamp(6px,  0.58vw,  8px);
+	--bcast-fz-small: clamp(7px,  0.72vw, 10px);
+	--bcast-fz-base:  clamp(8px,  0.85vw, 12px);
+	--bcast-fz-mid:   clamp(10px, 1.00vw, 16px);
+	--bcast-fz-name:  clamp(14px, 2.00vw, 24px);
 
 	/* ── Broadcast layout ───────────────────────────────────── */
 	--broadcast-space-safe: 2.2%;
 	--broadcast-h-ticker:   clamp(30px, 4%, 52px);
+	/* HUD grid module — all chrome measurements derive from this unit */
+	--hud-m: var(--broadcast-h-ticker);
+
+	/* ── Broadcast slot splits (12-column grid snap points) ─── */
+	--slot-gap:        clamp(8px, 0.6vw, 12px);
+	--split-main:      66.667%;   /* 8/12 cols — caption partner  */
+	--split-wide:      58.333%;   /* 7/12 cols — visual companion */
+	--split-companion: 41.667%;   /* 5/12 cols — visual companion */
 
 	/* ── Broadcast transitions ──────────────────────────────── */
 	--broadcast-dur-wipe-out: 240ms;

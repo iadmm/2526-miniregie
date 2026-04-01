@@ -22,10 +22,16 @@
 </div>
 
 <style>
+	/* ── Grid alignment ─────────────────────────────────────────────────────
+	 * left  = 0.5 M  — same left rail as .c-ticker (its container left inset)
+	 * bottom = ticker_inset + ticker_height + gap
+	 *        = 0.4 M + 1.0 M + 0.25 M = 1.65 M
+	 * This creates a modular vertical stack: floor → ticker → gap → lower-third
+	 */
 	.c-lower-third {
 		position: absolute;
-		left: var(--broadcast-space-safe, 2.2%);
-		bottom: calc(var(--broadcast-h-ticker, clamp(18px, 3.2%, 26px)) + var(--broadcast-space-safe, 2.2%) + 6px);
+		left:   calc(var(--hud-m) * 0.5);
+		bottom: calc(var(--hud-m) * 1.65);
 		z-index: 20;
 		display: flex;
 		flex-direction: column;
@@ -46,7 +52,7 @@
 	.c-lower-third__label span {
 		display: block;
 		font-family: var(--font-editorial, 'Schibsted Grotesk', sans-serif);
-		font-size: var(--broadcast-fz-xs, clamp(5px, 0.72vw, 7px));
+		font-size: var(--bcast-fz-fine, 8px);
 		font-weight: var(--fw-bold, 700);
 		letter-spacing: 0.13em;
 		text-transform: uppercase;
@@ -68,7 +74,7 @@
 	/* Name — Fraunces 400, the editorial serif for human names */
 	.c-lower-third__name {
 		font-family: var(--font-display, 'Fraunces', serif);
-		font-size: clamp(20px, 2.2vw, 56px);
+		font-size: var(--bcast-fz-name, 24px);
 		font-weight: 400;
 		font-style: normal;
 		color: #0a0a0a;
@@ -80,9 +86,9 @@
 	/* Role — Schibsted Grotesk, metadata below the name */
 	.c-lower-third__role {
 		font-family: var(--font-editorial, 'Schibsted Grotesk', sans-serif);
-		font-size: var(--broadcast-fz-xs, clamp(5px, 0.72vw, 7px));
+		font-size: var(--bcast-fz-base, 12px);
 		font-weight: var(--fw-regular, 400);
-		color: #686868;
+		color: rgba(0, 0, 0, 0.62);
 		letter-spacing: 0.10em;
 		text-transform: uppercase;
 		margin-top: clamp(2px, 0.3vw, 4px);
