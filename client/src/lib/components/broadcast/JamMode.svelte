@@ -14,10 +14,9 @@
 
 	const introActive = $derived(isCompanionIntroActive());
 	import { dualSequence } from '$lib/dual-sequence.svelte';
-	import LowerThird from './LowerThird.svelte';
-	import SlotChyron from './SlotChyron.svelte';
-	import Ticker from './Ticker.svelte';
-	import Branding from "$lib/components/broadcast/Branding.svelte";
+	import BroadcastChrome from "$lib/components/broadcast/jam-mode/BroadcastChrome.svelte";
+	import SlotChyron from "$lib/components/broadcast/jam-mode/SlotChyron.svelte";
+	import LowerThird from "$lib/components/broadcast/jam-mode/LowerThird.svelte";
 
 	const jamLayout  = $derived(serverState.jamLayout);
 	const jamSlots   = $derived(serverState.jamSlots);
@@ -156,8 +155,7 @@
 	</div>
 
 	<!-- Persistent chrome — lives above layout transitions -->
-	<Branding />
-	<Ticker />
+	<BroadcastChrome />
 	<LowerThird
 		visible={effectiveLt !== null}
 		label={effectiveLt?.label ?? ''}

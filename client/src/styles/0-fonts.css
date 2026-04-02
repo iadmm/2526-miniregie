@@ -1,0 +1,21 @@
+/* ── Fonts ────────────────────────────────────────────────────────────────────
+ *
+ * Fraunces — display, names only (weight 400, optical size axis)
+ * Schibsted Grotesk — all editorial text (weights 400 · 500 · 700)
+ *
+ * preconnect hints cut the first-connection latency on cold loads.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&family=Schibsted+Grotesk:wght@400;500;700&display=swap');
+
+:root {
+	/* ── Font families ──────────────────────────────────────── */
+	--font-display:   'Fraunces', serif;               /* names only  */
+	--font-editorial: 'Schibsted Grotesk', sans-serif; /* everything else */
+
+	/* ── Font weights ───────────────────────────────────────── */
+	--fw-regular: 400;
+	--fw-medium:  500;
+	--fw-bold:    700;
+}
+
