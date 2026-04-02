@@ -115,10 +115,11 @@
 
 	// ── Submission ────────────────────────────────────────────────────────────
 
-	type SubmitType = 'note' | 'photo' | 'gif' | 'clip' | 'link';
+	type SubmitType = 'note' | 'photo' | 'gif' | 'clip' | 'link' | 'ticker';
 
 	let submitType   = $state<SubmitType>('note');
 	let noteText     = $state('');
+	let tickerText   = $state('');
 	let linkUrl      = $state('');
 	let mediaFile    = $state<File | null>(null);
 	let submitError  = $state('');
@@ -131,11 +132,12 @@
 	}
 
 	function resetForm() {
-		noteText   = '';
-		linkUrl    = '';
-		mediaFile  = null;
+		noteText    = '';
+		tickerText  = '';
+		linkUrl     = '';
+		mediaFile   = null;
 		submitError = '';
-		submitOk   = '';
+		submitOk    = '';
 	}
 
 	$effect(() => {
@@ -157,6 +159,9 @@
 			if (submitType === 'note') {
 				if (!noteText.trim()) { submitError = 'Write something first'; submitBusy = false; return; }
 				fd.append('text', noteText.trim());
+			} else if (submitType === 'ticker') {
+				if (!tickerText.trim()) { submitError = 'Write a ticker message'; submitBusy = false; return; }
+				fd.append('text', tickerText.trim());
 			} else if (submitType === 'link') {
 				if (!linkUrl.trim()) { submitError = 'Enter a URL'; submitBusy = false; return; }
 				fd.append('url', linkUrl.trim());
@@ -173,10 +178,11 @@
 				return;
 			}
 
-			submitOk   = 'Submitted!';
-			noteText   = '';
-			linkUrl    = '';
-			mediaFile  = null;
+			submitOk    = 'Submitted!';
+			noteText    = '';
+			tickerText  = '';
+			linkUrl     = '';
+			mediaFile   = null;
 
 			// Refresh list
 			await loadMyItems();
@@ -378,7 +384,7 @@
 				<h2 class="c-go__section-title">Submit</h2>
 
 				<div class="c-go__type-selector" role="group" aria-label="Content type">
-					{#each (['note', 'photo', 'gif', 'clip', 'link'] as SubmitType[]) as t}
+					{#each (['note', 'photo', 'gif', 'clip', 'link', 'ticker'] as SubmitType[]) as t}
 						<button
 							class="c-go__type-btn"
 							class:c-go__type-btn--active={submitType === t}
@@ -404,6 +410,21 @@
 								required
 							></textarea>
 							<span class="c-go__char-count">{noteText.length}/500</span>
+						</div>
+
+					{:else if submitType === 'ticker'}
+						<div class="c-field">
+							<label class="c-field__label" for="ticker-text">Ticker message</label>
+							<input
+								class="c-field__input"
+								id="ticker-text"
+								type="text"
+								bind:value={tickerText}
+								placeholder="Short scrolling message…"
+								maxlength="120"
+								required
+							/>
+							<span class="c-go__char-count">{tickerText.length}/120</span>
 						</div>
 
 					{:else if submitType === 'link'}

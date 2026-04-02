@@ -20,6 +20,10 @@
 	--color-danger-dark: #b94213;
 	--color-danger-washed: #fef1ec;
 
+	--color-success: #76d143;
+	--color-success-dark: #427f1f;
+	--color-success-washed: #f3fbef;
+
 	/* ── Surfaces éditoriales ───────────────────────────────── */
 	--color-surface: #f8f7f5; /* blanc tempéré — note card, lower-third block */
 

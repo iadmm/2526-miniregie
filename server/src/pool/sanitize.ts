@@ -78,6 +78,13 @@ export function sanitize(input: RawInput): SanitizeResult {
       return { ok: true, validated: { type: 'note', text: input.text } };
     }
 
+    case 'ticker': {
+      const text = input.text.trim();
+      if (text.length === 0)  return { ok: false, error: 'Ticker text cannot be empty' };
+      if (text.length > 120)  return { ok: false, error: 'Ticker exceeds 120 characters' };
+      return { ok: true, validated: { type: 'ticker', text } };
+    }
+
     case 'youtube': {
       const youtubeId = getId(input.url);
       if (!youtubeId) return { ok: false, error: 'Could not extract a valid YouTube video ID from URL' };

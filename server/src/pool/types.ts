@@ -8,6 +8,7 @@ export interface RawFile {
 
 export type RawInput =
   | { type: 'note';      text: string }
+  | { type: 'ticker';    text: string }
   | { type: 'link';      url: string }
   | { type: 'youtube';   url: string }
   | { type: 'giphy';     url: string }
@@ -18,6 +19,7 @@ export type RawInput =
 
 export type ValidatedInput =
   | { type: 'note';      text: string }
+  | { type: 'ticker';    text: string }
   | { type: 'link';      url: string }
   | { type: 'youtube';   url: string; youtubeId: string }
   | { type: 'giphy';     url: string; giphyId: string }

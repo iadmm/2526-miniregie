@@ -1,42 +1,64 @@
 <script lang="ts">
+	import type { SlotChyronState } from '$lib/server-state.svelte';
+
 	interface Props {
-		visible:      boolean;
-		label:        string;
-		name:         string;
-		caption?:     string;
-		submittedAt?: number;
+		slotChyron: SlotChyronState | null;
 	}
 
-	let { visible, label, name, caption, submittedAt }: Props = $props();
+	let { slotChyron }: Props = $props();
+
+	// Snapshot: keeps content visible during the exit animation after slotChyron → null.
+	let displayed = $state<SlotChyronState | null>(null);
+	let leaving   = $state(false);
+	let leaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+	$effect(() => {
+		if (slotChyron !== null) {
+			if (leaveTimer !== null) { clearTimeout(leaveTimer); leaveTimer = null; }
+			leaving   = false;
+			displayed = slotChyron;
+		} else if (displayed !== null && !leaving) {
+			leaving   = true;
+			leaveTimer = setTimeout(() => {
+				leaving    = false;
+				displayed  = null;
+				leaveTimer = null;
+			}, 360); // 80ms delay + 280ms longest wipe-out
+		}
+	});
 
 	// HH:MM format for submission time
 	const timeStr = $derived.by(() => {
-		if (!submittedAt) return '';
-		return new Date(submittedAt).toLocaleTimeString('fr-BE', {
+		if (!displayed?.submittedAt) return '';
+		return new Date(displayed.submittedAt).toLocaleTimeString('fr-BE', {
 			hour: '2-digit', minute: '2-digit', hour12: false,
 		});
 	});
 </script>
 
 <!--
-  SlotChyron — source tag for companion visual slots.
-  Lives inside the visual slot (position: absolute, bottom-left, 5% inset).
-  Two-part horizontal tag:
-    [PHOTO] [légende  /  auteur · heure]
-  Stays visible during companion intro only; after the visual slides to its
-  companion position the attribution has already been seen.
-  Entry: clip-path wipe, flag 160ms then bloc 260ms, power2.out.
+  SlotChyron — compact source tag for visual slots.
+  Single-row horizontal bar: [FLAG] [text content].
+  Positioned by the parent (absolute, bottom-left, 5% inset).
+  Lighter editorial footprint than LowerThird — lives on the image.
+  Entry: clip-path wipe, flag 160ms then bloc 260ms+40ms delay, power2.out.
+  Exit: bloc 200ms, flag 280ms+80ms delay, power2.in.
 -->
-<div class="c-slot-chyron" class:c-slot-chyron--visible={visible} aria-live="polite">
+<div
+	class="c-slot-chyron"
+	class:visible={displayed !== null && !leaving}
+	class:leaving
+	aria-live="polite"
+>
 	<div class="c-slot-chyron__flag">
-		<span>{label}</span>
+		<span>{displayed?.label ?? ''}</span>
 	</div>
 	<div class="c-slot-chyron__bloc">
-		{#if caption}
-			<span class="c-slot-chyron__caption">{caption}</span>
-			<span class="c-slot-chyron__meta">{name}</span>
+		{#if displayed?.caption}
+			<span class="c-slot-chyron__caption">{displayed.caption}</span>
+			<span class="c-slot-chyron__meta">{displayed.name}</span>
 		{:else}
-			<span class="c-slot-chyron__name">{name}</span>
+			<span class="c-slot-chyron__name">{displayed?.name ?? ''}</span>
 			{#if timeStr}
 				<span class="c-slot-chyron__meta">{timeStr}</span>
 			{/if}
@@ -45,89 +67,91 @@
 </div>
 
 <style>
+	/*
+	 * Base state: sub-elements are clipped (invisible).
+	 * .visible  — wipe-in  : flag 160ms, bloc 260ms+40ms delay, power2.out
+	 * .leaving  — wipe-out : bloc 200ms, flag 280ms+80ms delay, power2.in
+	 */
 	.c-slot-chyron {
-		position: absolute;
-		left: 5%;
-		bottom: 5%;
-		z-index: 10;
 		display: flex;
 		flex-direction: row;
 		align-items: stretch;
-		gap: 1px;
+		line-height: 1;
 	}
 
-	/* ── Cyan flag ──────────────────────────────────────────────────── */
+	.c-slot-chyron__flag,
+	.c-slot-chyron__bloc {
+		clip-path: inset(0 100% 0 0);
+	}
+
+	/* ── Entry ──────────────────────────────────────────────── */
+
+	.c-slot-chyron.visible .c-slot-chyron__flag {
+		animation: chyron-wipe-in 160ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+	}
+
+	.c-slot-chyron.visible .c-slot-chyron__bloc {
+		animation: chyron-wipe-in 260ms cubic-bezier(0.16, 1, 0.3, 1) 40ms forwards;
+	}
+
+	/* ── Exit ───────────────────────────────────────────────── */
+
+	.c-slot-chyron.leaving .c-slot-chyron__bloc {
+		animation: chyron-wipe-out 200ms cubic-bezier(0.55, 0, 1, 0.45) forwards;
+	}
+
+	.c-slot-chyron.leaving .c-slot-chyron__flag {
+		animation: chyron-wipe-out 280ms cubic-bezier(0.55, 0, 1, 0.45) 80ms forwards;
+	}
+
+	@keyframes chyron-wipe-in {
+		from { clip-path: inset(0 100% 0 0); }
+		to   { clip-path: inset(0 0% 0 0); }
+	}
+
+	@keyframes chyron-wipe-out {
+		from { clip-path: inset(0 0% 0 0); }
+		to   { clip-path: inset(0 100% 0 0); }
+	}
+
+	/* ── Flag ───────────────────────────────────────────────── */
 
 	.c-slot-chyron__flag {
-		background: var(--color-brand, #1ac0d7);
-		padding: clamp(2px, 0.28vw, 3px) clamp(4px, 0.55vw, 6px);
-		/* Default: hidden. Exit: power2.in 120ms */
-		clip-path: inset(0 100% 0 0);
-		transition: clip-path 120ms cubic-bezier(0.4, 0, 1, 0);
-	}
-
-	.c-slot-chyron__flag span {
-		display: block;
-		font-family: var(--font-editorial, 'Schibsted Grotesk', sans-serif);
-		font-size: var(--bcast-fz-fine, 8px);
+		background: var(--color-success);
+		color: var(--color-broadcast-bg);
+		font-family: var(--font-editorial);
+		font-size: var(--font-size-base);
 		font-weight: 700;
-		letter-spacing: 0.12em;
+		letter-spacing: 0.08em;
 		text-transform: uppercase;
-		color: rgba(0, 0, 0, 0.68);
-		line-height: 1;
-		white-space: nowrap;
+		padding: calc(0.45 * var(--grid-unit)) calc(0.75 * var(--grid-unit));
+		display: flex;
+		align-items: center;
 	}
 
-	/* ── White bloc — main content ─────────────────────────────────── */
+	/* ── Bloc ───────────────────────────────────────────────── */
 
 	.c-slot-chyron__bloc {
-		background: var(--color-surface, #f8f7f5);
-		padding: clamp(2px, 0.28vw, 3px) clamp(5px, 0.7vw, 8px);
+		background: var(--color-broadcast-bg);
 		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		gap: 1px;
-		/* Default: hidden. Exit: power2.in 120ms */
-		clip-path: inset(0 100% 0 0);
-		transition: clip-path 120ms cubic-bezier(0.4, 0, 1, 0);
+		flex-direction: row;
+		align-items: center;
+		gap: calc(0.6 * var(--grid-unit));
+		padding: calc(0.45 * var(--grid-unit)) calc(1.25 * var(--grid-unit)) calc(0.45 * var(--grid-unit)) calc(0.75 * var(--grid-unit));
 	}
 
-	/* Caption or author name — Fraunces 400 */
-	.c-slot-chyron__caption,
-	.c-slot-chyron__name {
-		display: block;
-		font-family: var(--font-display, 'Fraunces', serif);
-		font-size: var(--bcast-fz-base, 12px);
+	.c-slot-chyron__name,
+	.c-slot-chyron__caption {
+		font-family: var(--font-display);
+		font-size: var(--font-size-medium);
 		font-weight: 400;
-		font-style: normal;
-		color: #0a0a0a;
-		line-height: 1;
-		white-space: nowrap;
+		color: var(--color-ink-88);
 	}
 
-	/* Secondary line: author (when caption shown) or time */
 	.c-slot-chyron__meta {
-		display: block;
-		font-family: var(--font-editorial, 'Schibsted Grotesk', sans-serif);
-		font-size: var(--bcast-fz-fine, 8px);
+		font-family: var(--font-editorial);
+		font-size: var(--font-size-medium);
 		font-weight: 400;
-		color: rgba(0, 0, 0, 0.62);
-		line-height: 1;
-		white-space: nowrap;
-		letter-spacing: 0.04em;
-	}
-
-	/* ── Visible state — entry wipes ────────────────────────────────── */
-
-	/* Flag arrives first: 160ms power2.out, no delay */
-	.c-slot-chyron--visible .c-slot-chyron__flag {
-		clip-path: inset(0 0% 0 0);
-		transition: clip-path 160ms cubic-bezier(0, 0, 0.4, 1) 0ms;
-	}
-
-	/* Bloc arrives second: 260ms power2.out, 100ms delay */
-	.c-slot-chyron--visible .c-slot-chyron__bloc {
-		clip-path: inset(0 0% 0 0);
-		transition: clip-path 260ms cubic-bezier(0, 0, 0.4, 1) 100ms;
+		color: var(--color-ink-42);
 	}
 </style>

@@ -8,11 +8,15 @@
 
 	// ── Data ─────────────────────────────────────────────────────
 
-	const tickerItems = $derived(
-		serverState.state?.pool.queueSnapshot.filter(i => i.type === 'ticker') ?? []
-	);
+	const DEV_AUTHOR: MediaItem['author'] = { participantId: 'system:dev', displayName: 'System', team: '', role: '' };
+	const DEV_TICKER_ITEMS: MediaItem[] = import.meta.env.DEV ? [
+		{ id: 'dev-1', type: 'ticker', content: { text: "Bienvenue au JAM Multimédia — 48h de création collective à l'IAD" }, queuePosition: 0, status: 'ready', submittedAt: Date.now(), author: DEV_AUTHOR },
+		{ id: 'dev-2', type: 'ticker', content: { text: "Soumettez vos photos, vidéos et messages via l'interface /go" }, queuePosition: 1, status: 'ready', submittedAt: Date.now(), author: DEV_AUTHOR },
+		{ id: 'dev-3', type: 'ticker', content: { text: 'M4TV — la chaîne du campus, en direct depuis le studio' }, queuePosition: 2, status: 'ready', submittedAt: Date.now(), author: DEV_AUTHOR },
+	] : [];
 
-	const chyronActive = $derived(serverState.lowerThird !== null || serverState.slotChyron !== null);
+	const tickerItems = $derived(serverState.state?.pool.queueSnapshot.filter(i => i.type === 'ticker'));
+
 	const visible = $derived(tickerItems.length > 0);
 
 	// ── Scroll ───────────────────────────────────────────────────
@@ -43,80 +47,60 @@
 </script>
 
 <div class="c-ticker" class:has-messages={visible} aria-live="off" aria-atomic="false">
-	<!-- Scrolling text -->
-	<div class="c-ticker-track__wrapper" class:hidden={chyronActive}>
-		<div class="c-ticker-track" bind:this={track}>
-			{#each [...tickerItems, ...tickerItems] as item, i (i)}
-				<span class="c-ticker-track__item">{tickerText(item)}</span>
-				<span class="c-ticker-track__sep" aria-hidden="true">·</span>
-			{/each}
-		</div>
+	<div class="c-ticker-track" bind:this={track}>
+		{#each [...tickerItems, ...tickerItems] as item, i (i)}
+			<span class="c-ticker-track__item">{tickerText(item)}</span>
+			<span class="c-ticker-track__sep" aria-hidden="true">·</span>
+		{/each}
 	</div>
 </div>
 
 <style>
 	.c-ticker {
-		height: var(--hud-m);
-		display: flex;
-		align-items: stretch;
 		overflow: hidden;
-
 		background: #080b12;
-		border-top: 1px solid rgba(255, 255, 255, 0.06);
-	}
-
-	/* ── Scroll track — conditional, fades in with messages ─────────────── */
-
-	.c-ticker-track__wrapper {
-		flex: 1 1 0;
-		min-width: 0;
-		overflow: hidden;
+		font-size: var(--font-size-large);
 		display: flex;
 		align-items: center;
-		/* Hidden by default — track is empty, not the band */
-		opacity: 0;
-		transition: opacity 400ms ease;
+		position: relative;
+		margin-right: var(--grid-unit);
 	}
 
-	/* Reveal when queue has items AND no chyron is suppressing it */
-	.c-ticker.has-messages .c-ticker-track__wrapper:not(.hidden) {
-		opacity: 1;
-	}
-
-	/* Suppress during lower-third / slot-chyron attribution display */
-	.c-ticker-track__wrapper.hidden {
-		opacity: 0;
+	.c-ticker::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 3em;
+		background: linear-gradient(to right, #080b12 0%, transparent 100%);
 		pointer-events: none;
+		z-index: 1;
+	}
+	.c-ticker::after {
+		content: '';
+		position: absolute;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		width: 1em;
+		background: linear-gradient(to left, #080b12 0%, transparent 100%);
+		pointer-events: none;
+		z-index: 1;
 	}
 
-	/* animation-duration injected by JS: track.scrollWidth / 2 / 55px·s⁻¹ */
 	.c-ticker-track {
 		display: inline-flex;
-		align-items: center;
 		white-space: nowrap;
 		animation: ticker-scroll linear infinite;
-		will-change: transform;
 	}
 
 	.c-ticker-track__item {
-		font-family: var(--font-editorial, 'Schibsted Grotesk', sans-serif);
-		font-size: var(--bcast-fz-small, 10px);
-		font-weight: 400;
-		/* Intentionally one step below clock (ink-65 vs ink-88) */
-		color: var(--color-ink-65, rgba(255, 255, 255, 0.65));
-		letter-spacing: 0.025em;
-		line-height: 1;
-		padding-right: clamp(20px, 1.9vw, 30px);
+		padding-right: 2em;
 	}
 
 	.c-ticker-track__sep {
-		flex-shrink: 0;
-		font-size: var(--bcast-fz-fine, 8px);
-		color: var(--color-brand, #1ac0d7);
-		opacity: 0.55;
-		padding-right: clamp(20px, 1.9vw, 30px);
-		line-height: 1;
-		user-select: none;
+		padding-right: 2em;
 	}
 
 	@keyframes ticker-scroll {

@@ -136,6 +136,15 @@ router.post(
           raw = { type: 'note', text };
           break;
         }
+        case 'ticker': {
+          const text = req.body['text'];
+          if (typeof text !== 'string' || !text.trim()) {
+            res.status(422).json({ error: 'Field `text` is required for type ticker' });
+            return;
+          }
+          raw = { type: 'ticker', text: text.trim() };
+          break;
+        }
         case 'link': {
           const url = req.body['url'];
           if (typeof url !== 'string') {
