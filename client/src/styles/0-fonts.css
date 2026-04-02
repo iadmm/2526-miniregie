@@ -6,7 +6,7 @@
  * preconnect hints cut the first-connection latency on cold loads.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&family=Schibsted+Grotesk:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap');
 
 :root {
 	/* ── Font families ──────────────────────────────────────── */
@@ -14,8 +14,36 @@
 	--font-editorial: 'Schibsted Grotesk', sans-serif; /* everything else */
 
 	/* ── Font weights ───────────────────────────────────────── */
-	--fw-regular: 400;
-	--fw-medium:  500;
-	--fw-bold:    700;
+	--font-weight-regular: 400;
+	--font-weight-medium:  500;
+	--font-weight-bold:    700;
+
+	/* ── UI type scale — Minor Third (×1.200) from 18px base ───
+	 *
+	 * html { font-size: 112.5% } → 1rem = 18px
+	 *
+	 * Computed px at 18px base:
+	 *   2x-small  ≈  10px   meta, timestamps, pill badges
+	 *   x-small   ≈  13px   captions, secondary meta
+	 *   small     =  15px   UI labels, helper text
+	 *   base      =  18px   body, primary content
+	 *   medium    ≈  22px   card titles, subsection heads
+	 *   large     ≈  26px   section headings
+	 *   x-large   ≈  31px   page title
+	 *   2x-large  ≈  37px   display / hero
+	 */
+	--font-size-2x-small: 0.556rem;
+	--font-size-x-small:  0.694rem;
+	--font-size-small:    0.833rem;
+	--font-size-base:     1rem;
+	--font-size-medium:   1.2rem;
+	--font-size-large:    1.44rem;
+	--font-size-x-large:  1.728rem;
+	--font-size-2x-large: 2.074rem;
+
+	/* ── Line heights ────────────────────────────────────────── */
+	--line-height-tight: 1.15;   /* headings */
+	--line-height-base:  1.6;    /* body */
+	--line-height-loose: 1.75;   /* small text, captions */
 }
 

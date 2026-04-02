@@ -1,138 +1,30 @@
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
-    import { serverState } from '$lib/server-state.svelte.js';
-
-    // ── Clock ─────────────────────────────────────────────────────
-
-    let now = $state(new Date());
-    let showCountdown = $state(false);
-    let clockInterval: ReturnType<typeof setInterval> | undefined;
-    let oscillInterval: ReturnType<typeof setInterval> | undefined;
-
-    const clockTime = $derived(
-        now.toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit', hour12: false })
-    );
-
-    const countdownTime = $derived.by(() => {
-        const endsAt = serverState.state?.jam.endsAt;
-        if (!endsAt) return null;
-        const remaining = Math.max(0, endsAt - now.getTime());
-        const totalSecs = Math.floor(remaining / 1000);
-        const h = Math.floor(totalSecs / 3600);
-        const m = Math.floor((totalSecs % 3600) / 60);
-        const s = totalSecs % 60;
-        if (h > 0) return `${h}h${String(m).padStart(2, '0')}`;
-        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    });
-
-    // Only oscillate when a countdown is available
-    const activeShowCountdown = $derived(showCountdown && countdownTime !== null);
-
-    // ── Lifecycle ─────────────────────────────────────────────────
-
-    onMount(() => {
-        clockInterval  = setInterval(() => { now = new Date(); }, 1000);
-        oscillInterval = setInterval(() => { showCountdown = !showCountdown; }, 5000);
-    });
-
-    onDestroy(() => {
-        clearInterval(clockInterval);
-        clearInterval(oscillInterval);
-    });
+    import Clock from './Clock.svelte';
 </script>
 
-<div class="c-branding">
-    <!-- Flag — UNIQUE colored surface -->
-    <div class="c-branding__flag c-branding-flag" aria-hidden="true">
-        <span class="c-branding-flag__dot"></span>
-        M4TV
+    <div class="c-branding-flag" aria-hidden="true">
+        <svg viewBox="0 0 90 45" fill="none" xmlns="http://www.w3.org/2000/svg" class="c-branding-flag__logo">
+            <path d="M1.25622 0.00695801H8.75323C9.37798 0.00695801 10.0027 0.631689 10.0027 1.25642V43.7986C10.0027 44.4636 9.46531 45.001 8.80026 45.001H1.2495C0.564291 45.001 0 44.4367 0 43.7515V1.25642C0.00671775 0.631689 0.631465 0.00695801 1.25622 0.00695801Z" fill="white"/>
+            <path d="M87.4943 16.2497L72.4936 1.24946C71.2441 4.00396e-07 69.9946 0 67.4956 0H58.7491C58.0572 0 57.4996 0.557556 57.4996 1.24946V43.7446C57.4996 44.4365 58.0572 44.994 58.7491 44.994H66.2125C66.9246 44.994 67.4956 44.4163 67.4956 43.711V12.0916C67.4956 11.319 68.4294 10.9361 68.9735 11.4803L79.1777 21.6842C79.6278 22.1343 79.6278 22.8665 79.1777 23.3233L72.7354 29.7654C72.5809 29.9199 72.5003 30.1214 72.5003 30.3431V42.2197C72.5003 42.784 73.1855 43.0728 73.5886 42.6698L87.501 28.7578C89.3753 26.2588 90 25.0094 90 22.5104C90 20.0115 89.3685 18.7554 87.4943 16.2497Z" fill="white"/>
+            <path d="M51.2495 0.00640869H42.503C40.004 0.00640869 38.7545 0.00640909 37.505 1.25587L15.753 23.0072C15.276 23.4842 15.0073 24.1291 15.0073 24.8008V35.8377C15.0073 36.449 15.7463 36.758 16.1762 36.3214L41.0184 11.48C41.5693 10.9291 42.503 11.3187 42.503 12.098V32.6872C42.503 33.5135 41.4954 33.9098 40.9311 33.3052L34.3477 26.2518C34.0252 25.9025 33.4744 25.8958 33.1385 26.2317L27.509 31.8609C27.1597 32.2103 27.153 32.7812 27.4889 33.144L37.4983 43.7443C38.7478 44.9937 39.9973 44.9937 42.4963 44.9937H51.2428C51.9347 44.9937 52.4923 44.4362 52.4923 43.7443V1.24916C52.499 0.563968 51.9347 0.00640869 51.2495 0.00640869Z" fill="white"/>
+        </svg>
     </div>
 
-    <!-- Oscillating clock: real time ↔ countdown -->
-    <div class="c-branding__clock c-branding-clock">
-            <span class="c-branding-clock__val" class:active={activeShowCountdown}>{clockTime}</span>
-        {#if countdownTime !== null}
-            <span class="c-branding-clock__val c-branding-clock__countdown" class:active={!activeShowCountdown}>
-                <span class="c-branding-clock__icon" aria-hidden="true">▼</span>
-                {countdownTime}
-            </span>
-        {/if}
-    </div>
-</div>
 
 <style>
-    .c-branding{
-        position: absolute;
-        bottom: calc(2* var(--grid-unit));
-        left: calc(2* var(--grid-unit));
-        display: flex;
-        height: calc(3*var(--grid-unit));
-    }
+
     .c-branding-flag {
         box-sizing: border-box;
-        padding: calc(1*var(--grid-unit));
+        padding: 0 calc(1*var(--grid-unit));
         background: var(--color-brand);
-    }
-    /* ── Clock oscillation container ──────────────────────────────────────── */
-
-    .c-branding-clock {
-        padding: calc(1 * var(--grid-unit));
-        background: var(--color-brand-dark);
-        width: 200px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .c-branding-clock__val {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        bottom: 0;
-        white-space: nowrap;
+        font-family: var(--font-editorial);
+        font-weight: var(--font-weight-medium);
         line-height: 1;
-        box-sizing: border-box;
-        padding: 0 calc(1 * var(--grid-unit));
+        color: var(--color-surface);
         display: flex;
         align-items: center;
     }
-
-    /* Countdown rests below the visible strip until animated in */
-    .c-branding-clock__countdown {
-        transform: translateY(100%);
-    }
-
-    /* ── Oscillation — only when a countdown span is in the DOM ───────────── */
-
-    .c-branding-clock:has(.c-branding-clock__countdown) .c-branding-clock__val:first-child {
-        animation: bcast-clock-primary 10s linear infinite;
-    }
-
-    .c-branding-clock:has(.c-branding-clock__countdown) .c-branding-clock__countdown {
-        animation: bcast-clock-secondary 10s linear infinite;
-    }
-
-    /*
-     * Cycle (10 s):
-     *   0 → 4 s   clock time visible, countdown below
-     *   4 → 5 s   clock slides up, countdown slides in
-     *   5 → 9 s   countdown visible, clock above
-     *   9 → 10 s  clock slides back, countdown exits
-     */
-
-    @keyframes bcast-clock-primary {
-        0%   { transform: translateY(0);     animation-timing-function: linear; }
-        40%  { transform: translateY(0);     animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
-        50%  { transform: translateY(-100%); animation-timing-function: linear; }
-        90%  { transform: translateY(-100%); animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
-        100% { transform: translateY(0);     }
-    }
-
-    @keyframes bcast-clock-secondary {
-        0%   { transform: translateY(100%);  animation-timing-function: linear; }
-        40%  { transform: translateY(100%);  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
-        50%  { transform: translateY(0);     animation-timing-function: linear; }
-        90%  { transform: translateY(0);     animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
-        100% { transform: translateY(100%);  }
+    .c-branding-flag__logo {
+        width: calc(3*var(--grid-unit));
     }
 </style>

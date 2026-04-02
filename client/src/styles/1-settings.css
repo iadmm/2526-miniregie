@@ -16,6 +16,10 @@
 	--color-brand:      #1ac0d7;
 	--color-brand-dark: #107c9d;
 
+	--color-danger: #ee5417;
+	--color-danger-dark: #b94213;
+	--color-danger-washed: #fef1ec;
+
 	/* ── Surfaces éditoriales ───────────────────────────────── */
 	--color-surface: #f8f7f5; /* blanc tempéré — note card, lower-third block */
 

@@ -1,7 +1,7 @@
 node_modules
 dist
 build
-.svelte-kit
+client/.svelte-kit
 
 # Runtime — pas du code source
 state.json
