@@ -1,0 +1,279 @@
+/* ─── /go — participant submission interface ─────────────────────────────────
+   Intentionally minimal: plain form elements, clear hierarchy, no decoration.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Shell ─────────────────────────────────────────────────────────────────── */
+
+.c-go {
+	min-height: 100dvh;
+	display: flex;
+	flex-direction: column;
+}
+
+.c-go__loading {
+	padding: var(--space-xl);
+	text-align: center;
+	color: #666;
+}
+
+/* ── Auth / onboarding screens ─────────────────────────────────────────────── */
+
+.c-go__auth {
+	width: 100%;
+	max-width: 380px;
+	margin: var(--space-2xl) auto;
+	padding: 0 var(--space-md);
+}
+
+.c-go__site-title {
+	font-size: var(--font-size-x-large);
+	font-weight: var(--font-weight-bold);
+	margin: 0 0 var(--space-lg);
+}
+
+.c-go__auth-tabs {
+	display: flex;
+	border-bottom: 1px solid #ccc;
+	margin-bottom: var(--space-lg);
+}
+
+.c-go__auth-tab {
+	flex: 1;
+	padding: var(--space-xs) var(--space-sm);
+	background: none;
+	border: none;
+	border-bottom: 2px solid transparent;
+	cursor: pointer;
+	font-size: var(--font-size-small);
+	color: #666;
+	margin-bottom: -1px;
+}
+
+.c-go__auth-tab--active {
+	color: inherit;
+	border-bottom-color: var(--color-brand);
+	font-weight: var(--font-weight-medium);
+}
+
+.c-go__form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-md);
+}
+
+.c-go__error {
+	margin: 0;
+	padding: var(--space-xs) var(--space-sm);
+	background: var(--color-danger-washed);
+	color: var(--color-danger-dark);
+	font-size: var(--font-size-small);
+}
+
+.c-go__ok {
+	margin: 0;
+	padding: var(--space-xs) var(--space-sm);
+	background: #eaf7ef;
+	color: #1a7a41;
+	font-size: var(--font-size-small);
+}
+
+.c-go__onboarding-hint {
+	margin: 0 0 var(--space-lg);
+	color: #555;
+}
+
+.c-go__avatar-preview {
+	width: 80px;
+	height: 80px;
+	object-fit: cover;
+	border-radius: 50%;
+	display: block;
+}
+
+/* ── Header (submit view) ──────────────────────────────────────────────────── */
+
+.c-go__header {
+	display: flex;
+	align-items: center;
+	gap: var(--space-md);
+	padding: var(--space-sm) var(--space-md);
+	border-bottom: 1px solid #ddd;
+	font-size: var(--font-size-small);
+}
+
+.c-go__site-name {
+	font-weight: var(--font-weight-bold);
+	margin-inline-end: auto;
+}
+
+.c-go__jam-status {
+	padding: 2px 8px;
+	font-size: var(--font-size-x-small);
+	font-weight: var(--font-weight-medium);
+}
+
+.c-go__jam-status--running { background: #d4edda; color: #155724; }
+.c-go__jam-status--idle    { background: #e2e3e5; color: #383d41; }
+.c-go__jam-status--ended   { background: #f8d7da; color: #721c24; }
+
+.c-go__user {
+	display: flex;
+	align-items: center;
+	gap: var(--space-xs);
+	color: #444;
+}
+
+.c-go__user-avatar {
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.c-go__signout {
+	background: none;
+	border: none;
+	color: #888;
+	cursor: pointer;
+	font-size: var(--font-size-x-small);
+	padding: 0;
+	text-decoration: underline;
+}
+
+/* ── Body (submit view) ────────────────────────────────────────────────────── */
+
+.c-go__body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-xl);
+	max-width: 560px;
+	width: 100%;
+	margin: 0 auto;
+	padding: var(--space-lg) var(--space-md);
+}
+
+.c-go__section-title {
+	font-size: var(--font-size-medium);
+	font-weight: var(--font-weight-bold);
+	margin: 0 0 var(--space-md);
+	display: flex;
+	align-items: center;
+	gap: var(--space-sm);
+}
+
+.c-go__refresh {
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: #888;
+	font-size: var(--font-size-base);
+	padding: 0;
+	line-height: 1;
+}
+
+/* ── Type selector ─────────────────────────────────────────────────────────── */
+
+.c-go__type-selector {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-xs);
+	margin-bottom: var(--space-md);
+}
+
+.c-go__type-btn {
+	padding: var(--space-2xs) var(--space-sm);
+	border: 1px solid #ccc;
+	background: #fff;
+	cursor: pointer;
+	font-size: var(--font-size-small);
+	color: #444;
+}
+
+.c-go__type-btn--active {
+	border-color: var(--color-brand);
+	color: var(--color-brand-dark);
+	font-weight: var(--font-weight-medium);
+}
+
+/* ── Submit form ───────────────────────────────────────────────────────────── */
+
+.c-go__submit-form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-md);
+}
+
+.c-go__textarea {
+	height: 100px;
+	resize: vertical;
+	font-family: inherit;
+}
+
+.c-go__char-count {
+	font-size: var(--font-size-x-small);
+	color: #888;
+	text-align: right;
+}
+
+/* ── Items list ────────────────────────────────────────────────────────────── */
+
+.c-go__empty {
+	color: #888;
+	margin: 0;
+}
+
+.c-go__items {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	border: 1px solid #ddd;
+}
+
+.c-go__item {
+	display: grid;
+	grid-template-columns: 60px 1fr auto;
+	align-items: center;
+	gap: var(--space-sm);
+	padding: var(--space-xs) var(--space-sm);
+	background: #fff;
+	font-size: var(--font-size-small);
+}
+
+.c-go__item:nth-child(even) {
+	background: #fafafa;
+}
+
+.c-go__item-type {
+	color: #888;
+	font-size: var(--font-size-x-small);
+}
+
+.c-go__item-preview {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: #333;
+}
+
+.c-go__item-status {
+	font-size: var(--font-size-x-small);
+	font-weight: var(--font-weight-medium);
+	white-space: nowrap;
+	padding: 2px 6px;
+}
+
+.c-go__item-status--pending { background: #e2e3e5; color: #383d41; }
+.c-go__item-status--ready   { background: #d4edda; color: #155724; }
+.c-go__item-status--played  { background: #cce5ff; color: #004085; }
+.c-go__item-status--evicted { background: #f8d7da; color: #721c24; }
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+
+@media (min-width: 640px) {
+	.c-go__body {
+		padding: var(--space-xl) var(--space-lg);
+	}
+}
