@@ -48,6 +48,7 @@
 
 <style>
     .c-branding-clock {
+        flex-shrink: 0;
         padding: calc(1 * var(--grid-unit));
         background: var(--color-brand-dark);
         width: calc(8 * var(--grid-unit));
