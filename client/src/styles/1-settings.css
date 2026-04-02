@@ -1,4 +1,8 @@
 :root {
+
+	/* ── Grid unit — base module for HUD chrome geometry ─────── */
+	--grid-unit: 18px;
+
 	/* ── Spacing ────────────────────────────────────────────── */
 	--space-2xs: 0.25rem;
 	--space-xs:  0.5rem;
@@ -28,13 +32,6 @@
 
 	/* ── Rules ──────────────────────────────────────────────── */
 	--color-rule-soft: rgba(255, 255, 255, 0.08);
-
-	/* ── Typography ─────────────────────────────────────────── */
-	--font-display:   'Fraunces', serif;             /* noms propres UNIQUEMENT */
-	--font-editorial: 'Schibsted Grotesk', sans-serif; /* tout le reste         */
-	--fw-regular: 400;
-	--fw-medium:  500;
-	--fw-bold:    700;
 
 	/* ── Broadcast type scale ── Full HD 1920×1080 target ────────────────────
 	 *
