@@ -8,12 +8,94 @@
 	width: 100%;
 	margin-block-start: var(--space-xs);
 	background: #000;
+	overflow: hidden;
+	cursor: default;
+	user-select: none;
+}
+
+.c-broadcast-preview__frame-wrap.is-zoomed {
+	cursor: grab;
+}
+
+.c-broadcast-preview__frame-wrap.is-zoomed:active {
+	cursor: grabbing;
+}
+
+.c-broadcast-preview__frame-wrap.is-interact {
+	cursor: default;
+	outline: 1px solid var(--color-brand);
 }
 
 .c-broadcast-preview__frame {
 	position: absolute;
-	inset: 0;
-	width: 100%;
-	height: 100%;
+	top: 0;
+	left: 0;
+	width: 1920px;
+	height: 1080px;
 	border: none;
+	outline: 1px solid rgba(26, 192, 215, 0.4);
+	transform-origin: 0 0;
+	pointer-events: none;
+}
+
+.c-broadcast-preview__frame.is-interactive {
+	pointer-events: auto;
+}
+
+/* ─── HUD ───────────────────────────────────────────────────────────────────── */
+
+.c-broadcast-preview__hud {
+	position: absolute;
+	top: var(--space-xs);
+	right: var(--space-xs);
+	display: flex;
+	align-items: center;
+	gap: var(--space-2xs);
+}
+
+.c-broadcast-preview__zoom-label {
+	font-size: 0.65rem;
+	font-variant-numeric: tabular-nums;
+	color: rgba(255, 255, 255, 0.7);
+	background: rgba(0, 0, 0, 0.5);
+	padding: 2px 6px;
+	border-radius: 3px;
+	pointer-events: none;
+}
+
+.c-broadcast-preview__reset {
+	font-size: 0.65rem;
+	color: rgba(255, 255, 255, 0.7);
+	background: rgba(0, 0, 0, 0.5);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	padding: 2px 8px;
+	border-radius: 3px;
+	cursor: pointer;
+	line-height: 1.4;
+}
+
+.c-broadcast-preview__reset:hover {
+	background: rgba(0, 0, 0, 0.75);
+	color: #fff;
+}
+
+.c-broadcast-preview__interact {
+	font-size: 0.65rem;
+	color: rgba(255, 255, 255, 0.7);
+	background: rgba(0, 0, 0, 0.5);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	padding: 2px 8px;
+	border-radius: 3px;
+	cursor: pointer;
+	line-height: 1.4;
+}
+
+.c-broadcast-preview__interact:hover {
+	background: rgba(0, 0, 0, 0.75);
+	color: #fff;
+}
+
+.c-broadcast-preview__interact.is-active {
+	color: var(--color-brand);
+	border-color: var(--color-brand);
 }

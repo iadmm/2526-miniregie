@@ -1,1 +1,5 @@
-/* Bare element defaults go here */
+body {
+	font-family: var(--font-editorial);
+	font-size: var(--font-size-base);
+	line-height: var(--line-height-base);
+}
