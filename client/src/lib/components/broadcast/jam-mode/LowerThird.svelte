@@ -1,112 +1,127 @@
 <script lang="ts">
-	interface Props {
-		visible: boolean;
-		label: string;
-		name: string;
-		role?: string;
-	}
+	import type { LowerThirdState } from '$lib/server-state.svelte';
 
-	let { visible, label, name, role }: Props = $props();
+	interface Props {
+		lowerThird: LowerThirdState | null;
+	}
+	let { lowerThird }: Props = $props();
+
+	// Snapshot: keeps content visible during the exit animation after lowerThird → null.
+	let displayed = $state<LowerThirdState | null>(null);
+	let leaving   = $state(false);
+	let leaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+	$effect(() => {
+		if (lowerThird !== null) {
+			// New content incoming — cancel any in-flight exit.
+			if (leaveTimer !== null) { clearTimeout(leaveTimer); leaveTimer = null; }
+			leaving   = false;
+			displayed = lowerThird;
+		} else if (displayed !== null && !leaving) {
+			// lowerThird just became null — start exit animation.
+			leaving   = true;
+			leaveTimer = setTimeout(() => {
+				leaving    = false;
+				displayed  = null;
+				leaveTimer = null;
+			}, 480); // 80ms delay + 400ms longest wipe-out = 480ms
+		}
+	});
 </script>
 
-<div class="c-lower-third" class:c-lower-third--visible={visible} aria-live="polite">
+<div
+	class="c-lower-third"
+	class:visible={displayed !== null && !leaving}
+	class:leaving
+	aria-live="polite"
+>
 	<div class="c-lower-third__label">
-		<span>{label || 'M4TV'}</span>
+		<span class="c-lower-third__type">{displayed?.label || 'M4TV'}</span>
+		{#if displayed?.role}
+			<div class="c-lower-third__role">{displayed.role}</div>
+		{/if}
 	</div>
 	<div class="c-lower-third__block">
-		<div class="c-lower-third__name">{name}</div>
-		{#if role}
-			<div class="c-lower-third__role">{role}</div>
-		{/if}
+		<div class="c-lower-third__name">{displayed?.name}</div>
 	</div>
 </div>
 
 <style>
-	/* ── Grid alignment ─────────────────────────────────────────────────────
-	 * left  = 0.5 M  — same left rail as .c-ticker (its container left inset)
-	 * bottom = ticker_inset + ticker_height + gap
-	 *        = 0.4 M + 1.0 M + 0.25 M = 1.65 M
-	 * This creates a modular vertical stack: floor → ticker → gap → lower-third
+
+	/*
+	 * Base state: sub-elements are clipped (invisible) until .visible is applied.
+	 * .visible  — wipe-in  : label 220ms, block 380ms+80ms delay, power2.out
+	 * .leaving  — wipe-out : block 280ms, label 380ms+80ms delay, power2.in
+	 *             direction reverses (left edge clips instead of right)
 	 */
 	.c-lower-third {
-		position: absolute;
-		left:   calc(var(--hud-m) * 0.5);
-		bottom: calc(var(--hud-m) * 1.65);
-		z-index: 20;
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		gap: 1.5px;
+		gap: var(--gap-unit);
 	}
-
-	/* ── Cyan tag — seule surface colorée du lower-third ─────── */
 
 	.c-lower-third__label {
-		background: var(--color-brand, #1ac0d7);
-		padding: clamp(1.5px, 0.22vw, 2.5px) clamp(5px, 0.7vw, 7px);
-		/* Default: hidden. Exit transition: power2.in, no delay */
+		display: flex;
+		flex-direction: row;
+		gap: var(--gap-unit);
 		clip-path: inset(0 100% 0 0);
-		transition: clip-path 160ms cubic-bezier(0.4, 0, 1, 0);
 	}
-
-	.c-lower-third__label span {
-		display: block;
-		font-family: var(--font-editorial, 'Schibsted Grotesk', sans-serif);
-		font-size: var(--bcast-fz-fine, 8px);
-		font-weight: var(--fw-bold, 700);
-		letter-spacing: 0.13em;
-		text-transform: uppercase;
-		color: rgba(0, 0, 0, 0.68);
-		line-height: 1;
-		white-space: nowrap;
-	}
-
-	/* ── White editorial block ────────────────────────────────── */
 
 	.c-lower-third__block {
-		background: var(--color-surface, #f8f7f5);
-		padding: clamp(4px, 0.55vw, 6px) clamp(8px, 1.1vw, 12px);
-		/* Default: hidden. Exit transition: power2.in, no delay */
 		clip-path: inset(0 100% 0 0);
-		transition: clip-path 160ms cubic-bezier(0.4, 0, 1, 0);
 	}
 
-	/* Name — Fraunces 400, the editorial serif for human names */
-	.c-lower-third__name {
-		font-family: var(--font-display, 'Fraunces', serif);
-		font-size: var(--bcast-fz-name, 24px);
-		font-weight: 400;
-		font-style: normal;
-		color: #0a0a0a;
-		line-height: 1.1;
-		letter-spacing: 0.01em;
-		white-space: nowrap;
+	.c-lower-third.visible .c-lower-third__label {
+		animation: bcast-lt-wipe 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 	}
 
-	/* Role — Schibsted Grotesk, metadata below the name */
+	.c-lower-third.visible .c-lower-third__block {
+		animation: bcast-lt-wipe 380ms cubic-bezier(0.16, 1, 0.3, 1) 80ms forwards;
+	}
+
+	@keyframes bcast-lt-wipe {
+		from { clip-path: inset(0 100% 0 0); }
+		to   { clip-path: inset(0 0% 0 0); }
+	}
+
+	@keyframes bcast-lt-wipe-out {
+		from { clip-path: inset(0 0% 0 0); }
+		to   { clip-path: inset(0 100% 0 0); }
+	}
+
+	/* Exit: label lingers slightly while block wipes out first */
+	.c-lower-third.leaving .c-lower-third__block {
+		animation: bcast-lt-wipe-out 280ms cubic-bezier(0.55, 0, 1, 0.45) forwards;
+	}
+
+	.c-lower-third.leaving .c-lower-third__label {
+		animation: bcast-lt-wipe-out 380ms cubic-bezier(0.55, 0, 1, 0.45) 80ms forwards;
+	}
+
 	.c-lower-third__role {
-		font-family: var(--font-editorial, 'Schibsted Grotesk', sans-serif);
-		font-size: var(--bcast-fz-base, 12px);
-		font-weight: var(--fw-regular, 400);
-		color: rgba(0, 0, 0, 0.62);
-		letter-spacing: 0.10em;
-		text-transform: uppercase;
-		margin-top: clamp(2px, 0.3vw, 4px);
-		line-height: 1;
-		white-space: nowrap;
+		font-family: var(--font-editorial);
+		font-size: var(--font-size-medium);
+		align-items: center;
+		display: flex;
+		background: var(--color-danger-dark);
+		padding: 0 calc(1 * var(--grid-unit)) 0 calc(.5 * var(--grid-unit));
 	}
-
-	/* ── Visible state — entry wipes ─────────────────────────── */
-
-	/* Tag arrives first: 180ms power2.out, no delay */
-	.c-lower-third--visible .c-lower-third__label {
-		clip-path: inset(0 0% 0 0);
-		transition: clip-path 180ms cubic-bezier(0, 0, 0.4, 1) 0ms;
+	.c-lower-third__type {
+		background: var(--color-danger);
+		padding: 0 calc(1 * var(--grid-unit));
+		display: flex;
+		align-items: center;
 	}
-
-	/* Block arrives second: 320ms power2.out, 120ms delay (60ms overlap with tag) */
-	.c-lower-third--visible .c-lower-third__block {
-		clip-path: inset(0 0% 0 0);
-		transition: clip-path 320ms cubic-bezier(0, 0, 0.4, 1) 120ms;
+	.c-lower-third__block {
+		display: flex;
+		flex-direction: column;
+		background: white;
+		padding: calc(.5 * var(--grid-unit)) calc(2 * var(--grid-unit)) calc(.5 * var(--grid-unit)) calc(1 * var(--grid-unit));
+	}
+	.c-lower-third__name {
+		color: var(--color-broadcast-bg);
+		font-family: var(--font-display);
+		font-size: var(--font-size-2x-large);
 	}
 </style>

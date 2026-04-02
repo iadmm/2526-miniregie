@@ -50,7 +50,7 @@
     .c-branding-clock {
         padding: calc(1 * var(--grid-unit));
         background: var(--color-brand-dark);
-        width: calc(7 * var(--grid-unit));
+        width: calc(8 * var(--grid-unit));
         position: relative;
         overflow: hidden;
         font-weight: var(--font-weight-bold);
