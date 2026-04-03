@@ -8,7 +8,7 @@ import {
   getMaxQueuePosition, batchUpdateQueuePositions, insertEvent,
   type ReadyItemFilters, type ScoredRow, type PlayedRow,
 } from '../db/queries.js';
-import type { GlobalState, MediaItem, MediaType, ScoredMediaItem } from '../../../shared/types.js';
+import type { GlobalState, MediaItem, MediaType, ScoredMediaItem } from '@shared/types';
 import type { RawInput, ValidatedInput } from './types.js';
 import { resolve } from './resolve.js';
 import { getJamConfig } from '../jam-config.js';
@@ -62,9 +62,11 @@ export class PoolManager extends EventEmitter {
     if (!guarded.ok) throw new Error(guarded.error);
 
     // 4. Create item as pending — queue position assigned after pipeline
+    // photo-url / gif-url are internal pipeline types that resolve to photo / gif
+    const MEDIA_TYPE_ALIASES: Partial<Record<string, MediaType>> = { 'photo-url': 'photo', 'gif-url': 'gif' };
     const item: MediaItem = {
       id:            randomUUID(),
-      type:          sanitized.validated.type as MediaType,
+      type:          (MEDIA_TYPE_ALIASES[sanitized.validated.type] ?? sanitized.validated.type) as MediaType,
       content:       {} as MediaItem['content'],
       queuePosition: null,
       status:        'pending',
@@ -85,8 +87,9 @@ export class PoolManager extends EventEmitter {
     try {
       const content = await resolve({
         type:    validated.type,
-        content: validated as ValidatedInput['content'],
-        filePath,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        content: validated as any,
+        ...(filePath !== undefined ? { filePath } : {}),
       });
 
       // Link dedup: evict if URL already exists in queue or played

@@ -3,8 +3,12 @@
 declare global {
 	namespace App {
 		// interface Error {}
-		// interface Locals {}
-		// interface PageData {}
+		interface Locals {
+			participant: import('@shared/types').Participant | null;
+		}
+		interface PageData {
+			participant: import('@shared/types').Participant | null;
+		}
 		// interface PageState {}
 		// interface Platform {}
 	}

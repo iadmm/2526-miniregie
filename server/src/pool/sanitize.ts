@@ -1,5 +1,20 @@
+import { extname } from 'node:path';
 import getId from 'get-youtube-id';
 import type { RawFile, RawInput, SanitizeResult, ValidatedInput } from './types.js';
+
+const IMAGE_EXTS: Record<string, 'photo-url' | 'gif-url'> = {
+  '.jpg': 'photo-url', '.jpeg': 'photo-url', '.png': 'photo-url', '.webp': 'photo-url',
+  '.gif': 'gif-url',
+};
+
+function detectImageUrl(url: string): 'photo-url' | 'gif-url' | null {
+  try {
+    const ext = extname(new URL(url).pathname).toLowerCase();
+    return IMAGE_EXTS[ext] ?? null;
+  } catch {
+    return null;
+  }
+}
 
 const MB = 1024 * 1024;
 
@@ -73,9 +88,29 @@ export function sanitize(input: RawInput): SanitizeResult {
 
     case 'note': {
       const text = input.text.trim();
-      if (text.length === 0)   return { ok: false, error: 'Note text cannot be empty' };
-      if (input.text.length > 280) return { ok: false, error: 'Note exceeds 280 characters' };
-      return { ok: true, validated: { type: 'note', text: input.text } };
+      if (text.length === 0) return { ok: false, error: 'Note text cannot be empty' };
+      if (text.length > 500) return { ok: false, error: 'Note exceeds 500 characters' };
+
+      // Auto-detect YouTube or Giphy URL anywhere in the text.
+      // The URL is one whitespace-delimited word; the rest becomes the caption.
+      const words = text.split(/\s+/);
+      const urlWord = words.find(w => /^https?:\/\//i.test(w));
+      if (urlWord) {
+        const rawUrl = urlWord.replace(/[.,;!?)"']+$/, ''); // strip trailing punctuation
+        const captionWords = words.filter(w => w !== urlWord);
+        const caption = captionWords.join(' ').trim() || undefined;
+
+        const youtubeId = getId(rawUrl);
+        if (youtubeId) return { ok: true, validated: { type: 'youtube', url: rawUrl, youtubeId, caption } };
+
+        const giphyId = extractGiphyId(rawUrl);
+        if (giphyId) return { ok: true, validated: { type: 'giphy', url: rawUrl, giphyId, caption } };
+
+        const imageType = detectImageUrl(rawUrl);
+        if (imageType) return { ok: true, validated: { type: imageType, url: rawUrl, caption } };
+      }
+
+      return { ok: true, validated: { type: 'note', text } };
     }
 
     case 'ticker': {
