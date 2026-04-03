@@ -1,19 +1,296 @@
-.c-login {
+/* ─── Login / Onboarding pages ─────────────────────────────────────────────────
+   Full dark — Railway-inspired: dark surfaces, not white cards.
+   No decoration. Color is functional, not ornamental.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.c-login-page {
+	min-height: 100dvh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #0d0f12;
+	padding: var(--space-lg) var(--space-md);
+}
+
+/* ── Card — slightly lighter surface, barely there ───────────────────────────── */
+
+.c-login-card {
 	width: 100%;
-	max-width: 320px;
-	padding: var(--space-lg);
+	max-width: 380px;
+	background: #161a22;
+	border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.c-login__title {
-	margin-block-end: var(--space-lg);
+/* ── Brand header ────────────────────────────────────────────────────────────── */
+
+.c-login-card__brand {
+	padding: var(--space-md) var(--space-lg);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
 
-.c-login__form {
+.c-login-card__logo {
+	font-family: var(--font-editorial);
+	font-size: var(--font-size-small);
+	font-weight: var(--font-weight-bold);
+	color: #fff;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────────────── */
+
+.c-login-card__tabs {
+	display: flex;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.c-login-card__tab {
+	flex: 1;
+	padding: var(--space-sm) var(--space-md);
+	background: none;
+	border: none;
+	border-bottom: 2px solid transparent;
+	margin-bottom: -1px;
+	cursor: pointer;
+	font-family: var(--font-editorial);
+	font-size: var(--font-size-small);
+	font-weight: var(--font-weight-medium);
+	color: rgba(255, 255, 255, 0.3);
+	transition: color 100ms, border-color 100ms;
+}
+
+.c-login-card__tab:hover {
+	color: rgba(255, 255, 255, 0.7);
+}
+
+.c-login-card__tab--active {
+	color: #fff;
+	border-bottom-color: var(--color-brand);
+}
+
+/* ── Form ────────────────────────────────────────────────────────────────────── */
+
+.c-login-card__form {
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-md);
+	padding: var(--space-lg);
 }
 
-.c-login__error {
-	margin: 0;
+.c-login-card__row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--space-sm);
 }
+
+/* ── Inputs ─────────────────────────────────────────────────────────────────── */
+
+.c-login-card__form .c-field__label {
+	font-size: var(--font-size-x-small);
+	font-weight: var(--font-weight-medium);
+	color: rgba(255, 255, 255, 0.35);
+}
+
+.c-login-card__form .c-field__input {
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 0;
+	background: rgba(255, 255, 255, 0.04);
+	font-family: var(--font-editorial);
+	font-size: var(--font-size-base);
+	color: #e8eaed;
+	outline: none;
+	padding: var(--space-xs) var(--space-sm);
+	transition: border-color 100ms, background 100ms;
+}
+
+.c-login-card__form .c-field__input:focus {
+	border-color: var(--color-brand);
+	background: rgba(26, 192, 215, 0.05);
+}
+
+.c-login-card__form .c-field__input::placeholder {
+	color: rgba(255, 255, 255, 0.18);
+}
+
+.c-field__hint {
+	font-size: var(--font-size-x-small);
+	color: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Error ───────────────────────────────────────────────────────────────────── */
+
+.c-login-card__error {
+	margin: 0;
+	padding: var(--space-xs) var(--space-sm);
+	background: rgba(238, 84, 23, 0.12);
+	border-left: 2px solid var(--color-danger);
+	color: #f4836a;
+	font-size: var(--font-size-small);
+}
+
+/* ── Submit ──────────────────────────────────────────────────────────────────── */
+
+.c-login-card__submit {
+	width: 100%;
+	padding: var(--space-sm) var(--space-md);
+	background: var(--color-brand);
+	color: #0d0f12;
+	border: none;
+	font-family: var(--font-editorial);
+	font-size: var(--font-size-small);
+	font-weight: var(--font-weight-bold);
+	cursor: pointer;
+	transition: opacity 100ms;
+}
+
+.c-login-card__submit:hover:not(:disabled) {
+	opacity: 0.85;
+}
+
+.c-login-card__submit:disabled {
+	opacity: 0.3;
+	cursor: not-allowed;
+}
+
+/* ── Switch link ─────────────────────────────────────────────────────────────── */
+
+.c-login-card__switch {
+	margin: 0;
+	padding: var(--space-md) var(--space-lg);
+	font-size: var(--font-size-x-small);
+	color: rgba(255, 255, 255, 0.3);
+	text-align: center;
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.c-login-card__switch-link {
+	background: none;
+	border: none;
+	padding: 0;
+	font-family: var(--font-editorial);
+	font-size: inherit;
+	color: rgba(255, 255, 255, 0.55);
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.c-login-card__switch-link:hover {
+	color: #fff;
+}
+
+/* ── Onboarding — welcome ────────────────────────────────────────────────────── */
+
+.c-onboarding__greeting {
+	padding: var(--space-lg) var(--space-lg) var(--space-md);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.c-onboarding__welcome {
+	margin: 0 0 var(--space-sm);
+	font-family: var(--font-editorial);
+	font-size: var(--font-size-x-large);
+	font-weight: var(--font-weight-bold);
+	color: #e8eaed;
+	line-height: var(--line-height-tight);
+}
+
+.c-onboarding__name {
+	color: var(--color-brand);
+}
+
+.c-onboarding__hint {
+	margin: 0;
+	font-size: var(--font-size-small);
+	color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Sign out ────────────────────────────────────────────────────────────────── */
+
+.c-onboarding__signout {
+	background: none;
+	border: none;
+	padding: 0;
+	font-family: var(--font-editorial);
+	font-size: var(--font-size-x-small);
+	color: rgba(255, 255, 255, 0.25);
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.c-onboarding__signout:hover {
+	color: rgba(255, 255, 255, 0.6);
+}
+
+/* ── Avatar upload ───────────────────────────────────────────────────────────── */
+
+.c-avatar-upload {
+	display: flex;
+	align-items: center;
+	gap: var(--space-md);
+}
+
+.c-avatar-upload__preview {
+	flex-shrink: 0;
+	width: 56px;
+	height: 56px;
+	object-fit: cover;
+	outline: 2px solid var(--color-brand);
+	outline-offset: 2px;
+}
+
+.c-avatar-upload__placeholder {
+	flex-shrink: 0;
+	width: 56px;
+	height: 56px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 255, 255, 0.05);
+	color: rgba(255, 255, 255, 0.2);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.c-avatar-upload__controls {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-xs);
+	min-width: 0;
+}
+
+.c-avatar-upload__pick {
+	display: inline-block;
+	padding: var(--space-xs) var(--space-sm);
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	font-family: var(--font-editorial);
+	font-size: var(--font-size-small);
+	color: rgba(255, 255, 255, 0.6);
+	cursor: pointer;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 240px;
+	transition: border-color 100ms, color 100ms;
+}
+
+.c-avatar-upload__pick:hover {
+	border-color: rgba(255, 255, 255, 0.3);
+	color: #e8eaed;
+}
+
+.c-avatar-upload__input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* ── Suppress old .c-login shell ────────────────────────────────────────────── */
+
+.c-login { display: none; }

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { apiFetch } from '$lib/api';
 	import { serverState } from '$lib/server-state.svelte';
 
 	const jam = $derived(serverState.state?.jam ?? null);
@@ -11,35 +12,17 @@
 	async function post(path: string, body?: unknown) {
 		busy = true;
 		error = null;
-		try {
-			const res = await fetch(path, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: body !== undefined ? JSON.stringify(body) : undefined,
-			});
-			if (!res.ok) error = ((await res.json()) as { error?: string }).error ?? `HTTP ${res.status}`;
-		} catch (e) {
-			error = String(e);
-		} finally {
-			busy = false;
-		}
+		const result = await apiFetch('POST', path, body);
+		error = result.error;
+		busy = false;
 	}
 
 	async function del(path: string, body?: unknown) {
 		busy = true;
 		error = null;
-		try {
-			const res = await fetch(path, {
-				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: body !== undefined ? JSON.stringify(body) : undefined,
-			});
-			if (!res.ok) error = ((await res.json()) as { error?: string }).error ?? `HTTP ${res.status}`;
-		} catch (e) {
-			error = String(e);
-		} finally {
-			busy = false;
-		}
+		const result = await apiFetch('DELETE', path, body);
+		error = result.error;
+		busy = false;
 	}
 </script>
 

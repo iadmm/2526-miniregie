@@ -1,27 +1,20 @@
 <script lang="ts">
+	import type { MediaItem } from '@shared/types';
 	import { serverState } from '$lib/server-state.svelte';
-	import { poolItems, fetchPoolItems, contentPreview, formatSubmittedAt, formatAR } from '$lib/pool-items.svelte';
+	import { contentPreview, formatSubmittedAt, formatAR } from '$lib/pool-items.svelte';
 
-	const pool = $derived(serverState.state?.pool ?? null);
+	interface Props { poolItems?: MediaItem[] }
+	let { poolItems = [] }: Props = $props();
+
 	const activeItemIds = $derived(serverState.state?.broadcast?.activeItemIds ?? []);
-
-	$effect(() => {
-		void pool?.total;
-		void fetchPoolItems();
-	});
 </script>
 
 <section class="c-admin__section">
 	<p class="c-admin__label">
-		Pool — {poolItems.items.length} items
-		{#if poolItems.loading}<span class="c-pool__loading">loading…</span>{/if}
+		Pool — {poolItems.length} items
 	</p>
 
-	{#if poolItems.error}
-		<p class="c-admin__error">{poolItems.error}</p>
-	{/if}
-
-	{#if poolItems.items.length === 0 && !poolItems.loading}
+	{#if poolItems.length === 0}
 		<p class="c-pool__empty">Pool is empty</p>
 	{:else}
 		<table class="c-pool__table">
@@ -37,7 +30,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each poolItems.items as item (item.id)}
+				{#each poolItems as item (item.id)}
 					<tr
 						class="c-pool__row"
 						data-status={item.status}

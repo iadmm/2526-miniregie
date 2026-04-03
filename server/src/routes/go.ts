@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { extname } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { requireAuth, requireOnboarding } from '../middleware/auth.js';
+import { requireAuth, requireOnboarding, makeToken } from '../middleware/auth.js';
 import { getTeams, setAvatarUrl, getAllItems } from '../db/queries.js';
 import type { BroadcastManager } from '../broadcast/index.js';
 import type { PoolManager } from '../pool/index.js';
@@ -252,16 +252,18 @@ router.post(
   '/onboarding/avatar',
   requireAuth,
   upload.single('avatar'),
-  (req, res) => {
+  async (req, res) => {
     if (!req.file) {
       res.status(400).json({ error: 'No avatar file uploaded' });
       return;
     }
 
     const avatarUrl = `/uploads/${req.file.filename}`;
-    setAvatarUrl(req.participant!.id, avatarUrl);
+    const p = req.participant!;
+    setAvatarUrl(p.id, avatarUrl);
 
-    res.json({ participant: { ...req.participant!, avatarUrl } });
+    const token = await makeToken(p.id, p.displayName, p.role, avatarUrl);
+    res.json({ token });
   },
 );
 

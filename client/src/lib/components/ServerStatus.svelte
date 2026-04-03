@@ -75,4 +75,8 @@ const connected = $derived(serverState.connected);
 			<dd>{pool.total} ready</dd>
 		{/if}
 	</dl>
+
+	<form method="POST" action="?/logout">
+		<button class="c-btn c-btn--ghost" type="submit">Logout</button>
+	</form>
 </section>
