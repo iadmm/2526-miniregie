@@ -61,6 +61,15 @@ async function probeImageAspect(filePath: string): Promise<number | null> {
   }
 }
 
+async function probeImageAspectFromUrl(url: string): Promise<number | null> {
+  try {
+    const result = await probe(url);
+    return result.width && result.height ? result.width / result.height : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchLinkMeta(url: string): Promise<{
   title: string | null;
   thumbnail: string | null;
@@ -132,6 +141,18 @@ export async function resolve(item: {
       return { url, aspectRatio, caption: null };
     }
 
+    case 'photo-url': {
+      const validated = item.content as { url: string; caption?: string };
+      const aspectRatio = await probeImageAspectFromUrl(validated.url);
+      return { url: validated.url, aspectRatio, caption: validated.caption ?? null };
+    }
+
+    case 'gif-url': {
+      const validated = item.content as { url: string; caption?: string };
+      const aspectRatio = await probeImageAspectFromUrl(validated.url);
+      return { url: validated.url, aspectRatio, caption: validated.caption ?? null };
+    }
+
     case 'clip': {
       if (!item.filePath) {
         return { url: '', duration: 0, mimeType: '', aspectRatio: null, caption: null };
@@ -163,7 +184,7 @@ export async function resolve(item: {
     }
 
     case 'giphy': {
-      const validated = item.content as { url: string; giphyId: string };
+      const validated = item.content as { url: string; giphyId: string; caption?: string };
       const meta = await fetchGiphyMeta(validated.giphyId);
       return {
         giphyId:     validated.giphyId,
@@ -171,7 +192,7 @@ export async function resolve(item: {
         mp4Url:      meta.mp4Url,
         title:       meta.title,
         aspectRatio: meta.aspectRatio,
-        caption:     null,
+        caption:     validated.caption ?? null,
       };
     }
 
@@ -181,7 +202,7 @@ export async function resolve(item: {
     }
 
     case 'youtube': {
-      const validated = item.content as { url: string; youtubeId: string };
+      const validated = item.content as { url: string; youtubeId: string; caption?: string };
       const meta = await fetchYoutubeMeta(validated.youtubeId);
       return {
         url:         validated.url,
@@ -190,7 +211,7 @@ export async function resolve(item: {
         duration:    meta.duration,
         thumbnail:   meta.thumbnail,
         aspectRatio: meta.aspectRatio,
-        caption:     null,
+        caption:     validated.caption ?? null,
       };
     }
 

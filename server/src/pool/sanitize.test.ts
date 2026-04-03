@@ -92,15 +92,15 @@ describe('sanitize — note', () => {
     }
   });
 
-  it('accepts text exactly at 280 characters', () => {
-    const result = sanitize({ type: 'note', text: 'a'.repeat(280) });
+  it('accepts text exactly at 500 characters', () => {
+    const result = sanitize({ type: 'note', text: 'a'.repeat(500) });
     expect(result.ok).toBe(true);
   });
 
-  it('rejects text over 280 characters', () => {
-    const result = sanitize({ type: 'note', text: 'a'.repeat(281) });
+  it('rejects text over 500 characters', () => {
+    const result = sanitize({ type: 'note', text: 'a'.repeat(501) });
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toMatch(/280/);
+    if (!result.ok) expect(result.error).toMatch(/500/);
   });
 
   it('rejects empty text', () => {
@@ -111,6 +111,97 @@ describe('sanitize — note', () => {
   it('rejects whitespace-only text', () => {
     const result = sanitize({ type: 'note', text: '   ' });
     expect(result.ok).toBe(false);
+  });
+});
+
+// ─── note — URL auto-detection ────────────────────────────────────────────────
+
+describe('sanitize — note URL detection', () => {
+  it('detects a bare YouTube URL and returns type youtube', () => {
+    const result = sanitize({ type: 'note', text: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.validated.type).toBe('youtube');
+      if (result.validated.type === 'youtube') {
+        expect(result.validated.youtubeId).toBe('dQw4w9WgXcQ');
+        expect(result.validated.caption).toBeUndefined();
+      }
+    }
+  });
+
+  it('detects a YouTube URL with surrounding text and extracts caption', () => {
+    const result = sanitize({ type: 'note', text: 'Check this out https://youtu.be/dQw4w9WgXcQ amazing' });
+    expect(result.ok).toBe(true);
+    if (result.ok && result.validated.type === 'youtube') {
+      expect(result.validated.youtubeId).toBe('dQw4w9WgXcQ');
+      expect(result.validated.caption).toBe('Check this out amazing');
+    }
+  });
+
+  it('detects a bare Giphy URL and returns type giphy', () => {
+    const result = sanitize({ type: 'note', text: 'https://giphy.com/gifs/some-title-abc123XYZ' });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.validated.type).toBe('giphy');
+      if (result.validated.type === 'giphy') {
+        expect(result.validated.giphyId).toBe('abc123XYZ');
+        expect(result.validated.caption).toBeUndefined();
+      }
+    }
+  });
+
+  it('detects a Giphy URL with caption text', () => {
+    const result = sanitize({ type: 'note', text: 'Haha https://giphy.com/gifs/funny-abc123XYZ laughing' });
+    expect(result.ok).toBe(true);
+    if (result.ok && result.validated.type === 'giphy') {
+      expect(result.validated.caption).toBe('Haha laughing');
+    }
+  });
+
+  it('stays as note when the URL is not YouTube, Giphy, or an image', () => {
+    const result = sanitize({ type: 'note', text: 'See https://example.com for details' });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.validated.type).toBe('note');
+  });
+
+  it('detects a direct JPEG URL and returns type photo-url', () => {
+    const result = sanitize({ type: 'note', text: 'https://cdn.example.com/image.jpg' });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.validated.type).toBe('photo-url');
+      if (result.validated.type === 'photo-url') {
+        expect(result.validated.url).toBe('https://cdn.example.com/image.jpg');
+        expect(result.validated.caption).toBeUndefined();
+      }
+    }
+  });
+
+  it('detects a direct PNG URL with surrounding caption', () => {
+    const result = sanitize({ type: 'note', text: 'Our team https://cdn.example.com/team.png at the event' });
+    expect(result.ok).toBe(true);
+    if (result.ok && result.validated.type === 'photo-url') {
+      expect(result.validated.caption).toBe('Our team at the event');
+    }
+  });
+
+  it('detects a direct GIF URL and returns type gif-url', () => {
+    const result = sanitize({ type: 'note', text: 'https://cdn.example.com/anim.gif' });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.validated.type).toBe('gif-url');
+  });
+
+  it('detects a WEBP URL as photo-url', () => {
+    const result = sanitize({ type: 'note', text: 'https://cdn.example.com/photo.webp' });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.validated.type).toBe('photo-url');
+  });
+
+  it('strips trailing punctuation from detected URL', () => {
+    const result = sanitize({ type: 'note', text: 'Watch https://youtu.be/dQw4w9WgXcQ.' });
+    expect(result.ok).toBe(true);
+    if (result.ok && result.validated.type === 'youtube') {
+      expect(result.validated.youtubeId).toBe('dQw4w9WgXcQ');
+    }
   });
 });
 

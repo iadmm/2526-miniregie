@@ -145,15 +145,6 @@ router.post(
           raw = { type: 'ticker', text: text.trim() };
           break;
         }
-        case 'link': {
-          const url = req.body['url'];
-          if (typeof url !== 'string') {
-            res.status(422).json({ error: 'Field `url` is required for type link' });
-            return;
-          }
-          raw = { type: 'link', url };
-          break;
-        }
         case 'photo': {
           if (!req.file) {
             res.status(422).json({ error: 'A file is required for type photo' });

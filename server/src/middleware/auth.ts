@@ -1,16 +1,16 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { parse as parseCookieHeader } from 'cookie';
 import type { Request, Response, NextFunction } from 'express';
 import { getParticipantById } from '../db/queries.js';
 import type { Participant } from '../../../shared/types.js';
+import {
+  parseCookie,
+  signCookie,
+  COOKIE_NAME,
+  COOKIE_TTL_MS,
+} from '../../../shared/session.js';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface SessionPayload {
-  participantId: string;
-  role:          string;
-  exp:           number; // timestamp ms
-}
+export type { SessionPayload } from '../../../shared/session.js';
+export { parseCookie, signCookie, COOKIE_NAME };
 
 // Extend Express Request to carry the authenticated participant
 declare global {
@@ -19,52 +19,6 @@ declare global {
       participant?: Participant;
     }
   }
-}
-
-// ─── Config ───────────────────────────────────────────────────────────────────
-
-const COOKIE_SECRET  = process.env['COOKIE_SECRET'] ?? 'dev_secret_change_me';
-const COOKIE_NAME    = 'session';
-const COOKIE_TTL_MS  = 7 * 24 * 60 * 60 * 1000; // 7 days
-
-// ─── Cookie helpers ───────────────────────────────────────────────────────────
-
-function hmac(payload: string): string {
-  return createHmac('sha256', COOKIE_SECRET).update(payload).digest('hex');
-}
-
-export function signCookie(payload: SessionPayload): string {
-  const encoded = Buffer.from(JSON.stringify(payload)).toString('base64');
-  const sig     = hmac(encoded);
-  return `${encoded}.${sig}`;
-}
-
-export function parseCookie(value: string): SessionPayload | null {
-  const dot = value.lastIndexOf('.');
-  if (dot === -1) return null;
-
-  const encoded  = value.slice(0, dot);
-  const sig      = value.slice(dot + 1);
-  const expected = hmac(encoded);
-
-  // Constant-time comparison to prevent timing attacks
-  const sigBuf = Buffer.from(sig);
-  const expBuf = Buffer.from(expected);
-  if (sigBuf.length !== expBuf.length || !timingSafeEqual(sigBuf, expBuf)) return null;
-
-  let payload: SessionPayload;
-  try {
-    payload = JSON.parse(Buffer.from(encoded, 'base64').toString('utf8')) as SessionPayload;
-  } catch {
-    return null;
-  }
-
-  if (typeof payload.participantId !== 'string') return null;
-  if (typeof payload.role          !== 'string') return null;
-  if (typeof payload.exp           !== 'number') return null;
-  if (payload.exp < Date.now())                  return null;
-
-  return payload;
 }
 
 export function makeCookieOptions(): {
@@ -158,5 +112,3 @@ export function requireOnboarding(req: Request, res: Response, next: NextFunctio
   }
   next();
 }
-
-export { COOKIE_NAME };
