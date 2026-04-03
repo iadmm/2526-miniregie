@@ -122,6 +122,11 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
 
   // ─── Broadcast ────────────────────────────────────────────────────────────────
 
+  router.post("/broadcast/reload", (_req, res) => {
+    broadcast.reloadBroadcastClients();
+    res.json({ ok: true });
+  });
+
   router.post("/broadcast/dispatch", (req, res) => {
     const { appId } = req.body as { appId?: unknown };
     if (typeof appId !== "string" || appId.trim().length === 0) {

@@ -118,6 +118,7 @@ export type AppId = string;
 export const KNOWN_APPS = [
   'pre-jam-idle',
   'countdown-to-jam',
+  'start-jam',
   'jam-mode',
   'micro-trottoir',
   'end-of-countdown',
