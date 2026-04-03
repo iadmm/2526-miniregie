@@ -1,3 +1,6 @@
+import dotenv from 'dotenv'
+dotenv.config();
+
 import express from 'express';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
@@ -14,6 +17,7 @@ import createApiRouter       from './routes/api.js';
 import createGoRouter        from './routes/go.js';
 import createScheduleRouter  from './routes/schedule.js';
 import createQueueRouter     from './routes/queue.js';
+
 
 const app        = express();
 const httpServer = createServer(app);
@@ -44,6 +48,12 @@ const scene = new SceneManager(pool, {
 // ─── Static file serving ──────────────────────────────────────────────────────
 
 const UPLOAD_DIR = process.env['UPLOAD_DIR'] ?? './uploads';
+
+app.use((req, res, next) => {
+  console.log('REQ →', req.method, req.url);
+  next();
+});
+
 app.use('/uploads', express.static(UPLOAD_DIR));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
@@ -58,6 +68,17 @@ app.use('/go/api',        createGoRouter(broadcast, pool));
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', ts: Date.now() });
 });
+
+// Serve built SvelteKit app in production.
+// The handler is imported dynamically so dev startup doesn't require a prior build.
+if (process.env['NODE_ENV'] === 'production') {
+  console.log('NODE_ENV=production');
+  // Path is relative to server/dist/index.js at runtime
+  const handlerUrl = new URL('../../client/build/handler.js', import.meta.url).href;
+  console.log('handleUrl', handlerUrl);
+  const { handler } = await import(handlerUrl) as { handler: Parameters<typeof app.use>[0] };
+  app.use(handler);
+}
 
 // ─── Heartbeat for broadcast client watchdog ──────────────────────────────────
 
