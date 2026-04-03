@@ -1,0 +1,23 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_PATH: /app/data/miniregie.db
+      UPLOAD_DIR: /app/data/uploads
+      COOKIE_SECRET: ${COOKIE_SECRET}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
+      GIPHY_API_KEY: ${GIPHY_API_KEY}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      ORIGIN: ${ORIGIN:-http://localhost:3000}
+    volumes:
+      - app_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  app_data:

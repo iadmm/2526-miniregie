@@ -35,18 +35,4 @@
 		height: 100%;
 		object-fit: contain; /* preserve aspect ratio — GIFs often have specific ratios */
 	}
-
-	.c-media-gif__caption {
-		position: absolute;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		margin: 0;
-		padding: 0.4em 0.7em;
-		background: rgba(8, 9, 11, 0.82);
-		color: #e0e0e0;
-		font-family: 'Schibsted Grotesk', sans-serif;
-		font-size: clamp(0.6rem, 1.4cqi, 0.85rem);
-		line-height: 1.3;
-	}
 </style>

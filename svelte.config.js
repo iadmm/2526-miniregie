@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-auto';
+import adapter from '@sveltejs/adapter-node';
 import { relative, sep } from 'node:path';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -13,7 +13,7 @@ const config = {
 		},
 	},
 	kit: {
-		adapter: adapter(),
+		adapter: adapter({ out: 'client/build' }),
 		outDir: 'client/.svelte-kit',
 		files: {
 			appTemplate: 'client/src/app.html',

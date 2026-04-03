@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { serverState } from '$lib/server-state.svelte';
 	import { expoOut, cubicIn } from 'svelte/easing';
+	import type { TransitionConfig } from 'svelte/transition';
 	import PreJamIdle from '$lib/components/broadcast/PreJamIdle.svelte';
 	import CountdownToJam from '$lib/components/broadcast/CountdownToJam.svelte';
 	import JamMode from '$lib/components/broadcast/JamMode.svelte';
@@ -13,7 +14,7 @@
 
 	// Iris wipe: collapses to a vertical hairline then expands into the next app.
 	// Uses clip-path: inset(0 X% 0 X%) — symmetric horizontal blinders.
-	function iris(node: Element, { duration = 400, easing = expoOut }: { duration?: number; easing?: (t: number) => number } = {}) {
+	function iris(_node: Element, { duration = 400, easing = expoOut }: { duration?: number; easing?: (t: number) => number } = {}): TransitionConfig {
 		return {
 			duration,
 			css: (t: number) => {
