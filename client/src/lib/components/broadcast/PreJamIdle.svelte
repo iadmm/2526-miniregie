@@ -110,10 +110,8 @@
         position: relative;
     }
 
-    .content {
-        svg {
-            width: 75%;
-        }
+    .content svg {
+        width: 75%;
     }
 
     @keyframes scale-up-center {

@@ -92,29 +92,14 @@ export class PoolManager extends EventEmitter {
         ...(filePath !== undefined ? { filePath } : {}),
       });
 
-      // Link dedup: evict if URL already exists in queue or played
-      if ('url' in (content as object)) {
-        const url = (content as { url: string }).url;
-        if (url) {
-          const isDupe =
-            getReadyItems().some(i => 'url' in (i.content as object) && (i.content as { url: string }).url === url) ||
-            getPlayedItems().some(i => 'url' in (i.content as object) && (i.content as { url: string }).url === url);
-          if (isDupe) {
-            updateStatus(itemId, 'evicted');
-            insertEvent({ id: randomUUID(), itemId, type: 'evicted', appId: null, payload: { reason: 'duplicate' }, createdAt: Date.now() });
-            this.emit('update');
-            return;
-          }
-        }
-      }
-
       updateContent(itemId, content);
       updateQueuePosition(itemId, (getMaxQueuePosition() ?? 0) + 1);
       updateStatus(itemId, 'ready');
       insertEvent({ id: randomUUID(), itemId, type: 'enriched', appId: null, payload: null, createdAt: Date.now() });
       this.emit('item:ready', itemId);
       this.emit('update');
-    } catch {
+    } catch (err) {
+      console.error('[pool] pipeline failed for item', itemId, err);
       updateStatus(itemId, 'evicted');
       insertEvent({ id: randomUUID(), itemId, type: 'evicted', appId: null, payload: { reason: 'unresolvable' }, createdAt: Date.now() });
       this.emit('update');

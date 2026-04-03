@@ -1,3 +1,6 @@
+import dotenv from 'dotenv'
+dotenv.config();
+
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
@@ -10,7 +13,13 @@ import { participants, scheduleEntries } from './schema.js';
 
 const scryptAsync = promisify(scrypt);
 
+console.log("DB_PATH", process.env['DB_PATH']);
+console.log("ADMIN_USERNAME", process.env['ADMIN_USERNAME']);
+console.log("ADMIN_PASSWORD", process.env['ADMIN_PASSWORD']);
+
+
 const DB_PATH = process.env['DB_PATH'] ?? 'miniregie.db';
+
 
 const sqlite = new Database(DB_PATH);
 sqlite.pragma('journal_mode = WAL');
