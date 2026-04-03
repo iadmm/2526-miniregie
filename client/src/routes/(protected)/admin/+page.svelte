@@ -7,6 +7,8 @@
 	import SceneQueues from '$lib/components/SceneQueues.svelte';
 	import SlotTimers from '$lib/components/SlotTimers.svelte';
 	import BroadcastLog from '$lib/components/BroadcastLog.svelte';
+
+	const { data } = $props();
 </script>
 
 <main class="c-admin">
@@ -25,8 +27,8 @@
 		<SceneQueues />
 
 	</div>
-	<ScheduleControl />
-	<PoolView />
+	<ScheduleControl initialEntries={data.scheduleEntries} />
+	<PoolView poolItems={data.poolItems} />
 </main>
 
 <style>

@@ -4,10 +4,10 @@ declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			participant: import('@shared/types').Participant | null;
+			participant: import('@shared/session').SessionPayload | null;
 		}
 		interface PageData {
-			participant: import('@shared/types').Participant | null;
+			participant?: import('@shared/session').SessionPayload | null;
 		}
 		// interface PageState {}
 		// interface Platform {}

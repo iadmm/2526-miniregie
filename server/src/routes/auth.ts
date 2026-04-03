@@ -6,12 +6,7 @@ import {
   createParticipant,
   getPasswordHash,
 } from '../db/queries.js';
-import {
-  makeSessionCookie,
-  makeCookieOptions,
-  requireAuth,
-  COOKIE_NAME,
-} from '../middleware/auth.js';
+import { makeToken, requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 const scryptAsync = promisify(scrypt);
@@ -42,7 +37,7 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
 /**
  * POST /auth/login
  * Body: { username: string, password: string }
- * Returns: { participant }
+ * Returns: { token, participant }
  */
 router.post('/login', async (req, res) => {
   const { username, password } = req.body as { username?: unknown; password?: unknown };
@@ -54,7 +49,6 @@ router.post('/login', async (req, res) => {
 
   const participant = getParticipantByUsername(username);
   if (!participant) {
-    // Use a fake verify to prevent timing-based username enumeration
     await scryptAsync('dummy', 'deadbeef0000000000000000000000000000000000000000', 64);
     res.status(401).json({ error: 'Invalid credentials' });
     return;
@@ -65,10 +59,8 @@ router.post('/login', async (req, res) => {
     return;
   }
 
-  // Retrieve passwordHash (not exposed on Participant interface)
   const storedHash = getPasswordHash(participant.id);
   if (!storedHash) {
-    // System phantom accounts have no password — cannot log in
     res.status(401).json({ error: 'Invalid credentials' });
     return;
   }
@@ -79,15 +71,14 @@ router.post('/login', async (req, res) => {
     return;
   }
 
-  const cookieValue = makeSessionCookie(participant);
-  res.cookie(COOKIE_NAME, cookieValue, makeCookieOptions());
-  res.json({ participant });
+  const token = await makeToken(participant.id, participant.displayName, participant.role, participant.avatarUrl);
+  res.json({ token, participant });
 });
 
 /**
  * POST /auth/register
  * Body: { username: string, displayName: string, team: string, password: string }
- * Returns: { participant }
+ * Returns: { token, participant }
  */
 router.post('/register', async (req, res) => {
   const { username, displayName, team, password } = req.body as {
@@ -122,18 +113,8 @@ router.post('/register', async (req, res) => {
     team:         team.trim(),
   });
 
-  const cookieValue = makeSessionCookie(participant);
-  res.cookie(COOKIE_NAME, cookieValue, makeCookieOptions());
-  res.status(201).json({ participant });
-});
-
-/**
- * POST /auth/logout
- * Clears the session cookie.
- */
-router.post('/logout', (_req, res) => {
-  res.clearCookie(COOKIE_NAME, { path: '/' });
-  res.json({ ok: true });
+  const token = await makeToken(participant.id, participant.displayName, participant.role, participant.avatarUrl);
+  res.status(201).json({ token, participant });
 });
 
 /**

@@ -1,12 +1,15 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { apiFetch } from '$lib/api';
 	import type { ScheduleEntry } from '@shared/types';
 	import { buildAt, type AtType } from '$lib/schedule-utils';
 	import { serverState } from '$lib/server-state.svelte';
 	import ScheduleRow from './ScheduleRow.svelte';
 	import ScheduleForm from './ScheduleForm.svelte';
 
-	let entries = $state<ScheduleEntry[]>([]);
+	interface Props { initialEntries?: ScheduleEntry[] }
+	let { initialEntries = [] }: Props = $props();
+
+	let entries = $state<ScheduleEntry[]>(initialEntries);
 	let showAdd = $state(false);
 	let busy = $state(false);
 	let error = $state<string | null>(null);
@@ -31,28 +34,13 @@
 		}
 	}
 
-	onMount(fetchEntries);
-
 	async function api(method: string, path: string, body?: unknown): Promise<boolean> {
 		busy = true;
 		error = null;
-		try {
-			const res = await fetch(path, {
-				method,
-				headers: body !== undefined ? { 'Content-Type': 'application/json' } : {},
-				body: body !== undefined ? JSON.stringify(body) : undefined,
-			});
-			if (!res.ok) {
-				error = ((await res.json()) as { error?: string }).error ?? `HTTP ${res.status}`;
-				return false;
-			}
-			return true;
-		} catch (e) {
-			error = String(e);
-			return false;
-		} finally {
-			busy = false;
-		}
+		const result = await apiFetch(method, path, body);
+		error = result.error;
+		busy = false;
+		return result.ok;
 	}
 
 	async function handleSave(id: number, patch: { at: string; app: string; label: string | null }): Promise<boolean> {
