@@ -177,6 +177,10 @@ export class BroadcastManager {
     this.emitState();
   }
 
+  reloadBroadcastClients(): void {
+    this.io.emit('broadcast:reload');
+  }
+
   destroy(): void {
     if (this.tickInterval)    clearInterval(this.tickInterval);
     if (this.persistInterval) clearInterval(this.persistInterval);

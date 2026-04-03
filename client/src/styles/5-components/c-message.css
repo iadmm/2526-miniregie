@@ -1,0 +1,21 @@
+/* ─── c-message — inline status/alert banner ─────────────────────────────────
+   Modifier: --error, --success
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.c-message {
+	margin: 0;
+	padding: var(--space-xs) var(--space-sm);
+	font-size: var(--font-size-small);
+	line-height: 1.4;
+	margin-block: var(--space-md);
+}
+
+.c-message--error {
+	background: var(--color-danger-washed);
+	color: var(--color-danger-dark);
+}
+
+.c-message--success {
+	background: var(--color-success-washed);
+	color: var(--color-success-dark);
+}

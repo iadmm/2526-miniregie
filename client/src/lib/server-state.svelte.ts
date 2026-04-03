@@ -156,6 +156,10 @@ export function connectSocket(): void {
 		serverState.slotChyron = null;
 		logEvent('jam-mode:slot-chyron:hide');
 	});
+
+	socket.on('broadcast:reload', () => {
+		location.reload();
+	});
 }
 
 export function disconnectSocket(): void {
