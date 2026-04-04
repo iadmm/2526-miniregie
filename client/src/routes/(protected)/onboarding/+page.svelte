@@ -7,10 +7,21 @@
 	let avatarPreview = $state('');
 	let busy = $state(false);
 	let fileName = $state('');
+	let fileError = $state('');
+
+	const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 
 	function handleFilePick(e: Event) {
 		const input = e.currentTarget as HTMLInputElement;
 		const file = input.files?.[0];
+		if (file && file.size > MAX_SIZE) {
+			fileError = `Fichier trop volumineux (${(file.size / 1024 / 1024).toFixed(1)} Mo). Maximum : 5 Mo.`;
+			input.value = '';
+			avatarPreview = '';
+			fileName = '';
+			return;
+		}
+		fileError = '';
 		avatarPreview = file ? URL.createObjectURL(file) : '';
 		fileName = file?.name ?? '';
 	}
@@ -47,7 +58,9 @@
 				};
 			}}
 		>
-			{#if form?.error}
+			{#if fileError}
+				<p class="c-login-card__error" role="alert">{fileError}</p>
+			{:else if form?.error}
 				<p class="c-login-card__error" role="alert">{form.error}</p>
 			{/if}
 
@@ -82,7 +95,7 @@
 				</div>
 			</div>
 
-			<button class="c-login-card__submit" type="submit" disabled={busy}>
+			<button class="c-login-card__submit" type="submit" disabled={busy || !!fileError}>
 				{busy ? 'Envoi en cours…' : 'Enregistrer et continuer'}
 			</button>
 		</form>

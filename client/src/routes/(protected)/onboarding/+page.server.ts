@@ -9,7 +9,12 @@ export const actions: Actions = {
 	},
 
 	avatar: async ({ request, fetch, cookies }) => {
-		const fd    = await request.formData();
+		let fd: FormData;
+		try {
+			fd = await request.formData();
+		} catch {
+			return fail(413, { error: 'Fichier trop volumineux. Maximum : 5 Mo.' });
+		}
 		const token = cookies.get(COOKIE_NAME) ?? '';
 		const res   = await fetch('/go/api/onboarding/avatar', {
 			method:  'POST',
