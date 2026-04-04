@@ -5,6 +5,11 @@ export type { JamConfig };
 
 let _config: JamConfig | null = null;
 
+export function reloadJamConfig(filePath = 'config/jam.json'): JamConfig {
+  _config = null;
+  return loadJamConfig(filePath);
+}
+
 export function loadJamConfig(filePath = 'config/jam.json'): JamConfig {
   const raw = readFileSync(filePath, 'utf-8');
   _config = JSON.parse(raw) as JamConfig;

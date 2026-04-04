@@ -6,6 +6,7 @@ import {
   updateStatus,
   updateContent,
   deleteItem,
+  resetPool,
   getItemById,
   searchParticipants,
   setBanned,
@@ -121,6 +122,11 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
   });
 
   // ─── Broadcast ────────────────────────────────────────────────────────────────
+
+  router.post("/config/reload", (_req, res) => {
+    broadcast.reloadConfig();
+    res.json({ ok: true });
+  });
 
   router.post("/broadcast/reload", (_req, res) => {
     broadcast.reloadBroadcastClients();
@@ -270,6 +276,11 @@ export default function createApiRouter(broadcast: BroadcastManager, pool: PoolM
   router.delete("/items/:id", (req, res) => {
     const { id } = req.params as { id: string };
     deleteItem(id);
+    res.json({ ok: true });
+  });
+
+  router.post("/pool/reset", (_req, res) => {
+    resetPool();
     res.json({ ok: true });
   });
 

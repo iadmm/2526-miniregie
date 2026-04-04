@@ -13,10 +13,12 @@
     "freshItemWindowMs": 900000
   },
   "jamMode": {
-    "photoDurationMs": 20000,
+    "photoDurationMs": 30000,
     "noteDurationMs": 12000,
     "liveStreamMaxMs": 600000,
-    "enrichCheckMs": 15000
+    "enrichCheckMs": 15000,
+    "qrIntervalMs": 300000,
+    "qrHoldMs": 15000
   },
   "client": {
     "watchdogTimeoutMs": 30000

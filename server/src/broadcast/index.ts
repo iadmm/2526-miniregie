@@ -4,7 +4,7 @@ import { validateJamTransition } from './jam-state.js';
 import { insertBroadcastEvent, resetAllMedia } from '../db/queries.js';
 import type { GlobalState, MarketTrigger, AppId, App } from "@shared/types";
 import type { PoolManager } from "../pool";
-import { getJamConfig } from '../jam-config.js';
+import { getJamConfig, reloadJamConfig } from '../jam-config.js';
 import { ScheduleService } from './schedule.js';
 import { loadState, buildInitialState, saveState, type PersistedState } from './persistence.js';
 import { AppManager } from '../apps/app-manager.js';
@@ -175,6 +175,14 @@ export class BroadcastManager {
     this.logEvent('jam_state_change', { from: 'reset', to: 'idle' });
     void saveState(STATE_FILE, this.toPersistedState());
     this.emitState();
+  }
+
+  reloadConfig(): void {
+    reloadJamConfig();
+    const currentApp = this.state.broadcast.activeApp;
+    if (currentApp) {
+      void this.apps.transition(createApp(currentApp, this.pool));
+    }
   }
 
   reloadBroadcastClients(): void {

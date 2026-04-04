@@ -37,6 +37,11 @@ export class JamModeApp extends BaseApp {
   private readonly slotChyron:       SlotChyronOrchestrator;
   private readonly enrichPoller:     EnrichmentPoller;
   private readonly enrichIntervalMs: number;
+  private readonly qrIntervalMs:     number;
+  private readonly qrHoldMs:         number;
+  private qrForced    = false;
+  private qrTimer:     ReturnType<typeof setInterval>  | null = null;
+  private qrHoldTimer: ReturnType<typeof setTimeout>   | null = null;
 
   // Bound socket handlers — stored for clean removal in stop()
 
@@ -49,6 +54,8 @@ export class JamModeApp extends BaseApp {
     this.pool              = pool;
     const cfg              = getJamConfig().jamMode;
     this.enrichIntervalMs  = cfg.enrichCheckMs;
+    this.qrIntervalMs      = cfg.qrIntervalMs;
+    this.qrHoldMs          = cfg.qrHoldMs;
     this.slotTimer      = new SlotTimer(cfg, (slot) => this.onSlotExpired(slot));
     this.lowerThird     = new LowerThirdOrchestrator((event, payload) => this.io.emit(event, payload));
     this.slotChyron     = new SlotChyronOrchestrator((event, payload) => this.io.emit(event, payload));
@@ -77,9 +84,23 @@ export class JamModeApp extends BaseApp {
 
   play(): void {
     this.applyLayout();
+    this.qrTimer = setInterval(() => {
+      this.qrForced = true;
+      this.applyLayout();
+      this.qrHoldTimer = setTimeout(() => {
+        this.qrForced = false;
+        this.queues = this.fetchQueues();
+        this.applyLayout();
+      }, this.qrHoldMs);
+    }, this.qrIntervalMs);
   }
 
   async stop(): Promise<void> {
+    if (this.qrTimer)     clearInterval(this.qrTimer);
+    if (this.qrHoldTimer) clearTimeout(this.qrHoldTimer);
+    this.qrTimer     = null;
+    this.qrHoldTimer = null;
+    this.qrForced    = false;
     this.slotTimer.clearAll();
     this.enrichPoller.cancel();
     this.lowerThird.clear();
@@ -99,6 +120,7 @@ export class JamModeApp extends BaseApp {
     lowerThird:   LowerThirdPayload | null;
     slotChyron:   SlotChyronPayload | null;
     enrichCheckAt: { checkAt: number; intervalMs: number } | null;
+    qrVisible:   boolean;
   } {
     const timing: Partial<Record<SlotName, SlotTimerMeta>> = {};
     for (const slot of ['loud', 'visual', 'note'] as SlotName[]) {
@@ -114,6 +136,7 @@ export class JamModeApp extends BaseApp {
       enrichCheckAt: this.enrichPoller.getCheckAt() != null
       ? { checkAt: this.enrichPoller.getCheckAt()!, intervalMs: this.enrichIntervalMs }
       : null,
+      qrVisible:     this.qrForced,
     };
   }
 
@@ -146,6 +169,16 @@ export class JamModeApp extends BaseApp {
   // ─── Core layout cycle ───────────────────────────────────────────────────────
 
   private applyLayout(): void {
+    if (this.qrForced) {
+      this.layout = 'QR_CARD';
+      this.io.emit('jam-mode:layout', { layout: 'QR_CARD', slots: {}, timing: {} });
+      this.lowerThird.clear();
+      this.slotChyron.clear();
+      this.enrichPoller.cancel();
+      this.io.emit('jam-mode:enrich', null);
+      return;
+    }
+
     const prevSlots = this.slots;
 
     const locked = {

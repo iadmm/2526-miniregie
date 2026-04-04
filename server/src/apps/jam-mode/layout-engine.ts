@@ -43,6 +43,7 @@ export const LAYOUT_REQUIREMENTS: Record<LayoutName, LayoutRequirements> = {
   // ── Aspect-neutral layouts ─────────────────────────────────────────────────
   //                                                                     weight
   IDLE:                      { loud: 0, visual: 0, note: 0,             weight:  0 },
+  QR_CARD:                   { loud: 0, visual: 0, note: 0,             weight:  0 },
   NOTE_CARD:                 { loud: 0, visual: 0, note: 1,             weight: 10 },
   VISUAL_FULL:               { loud: 0, visual: 1, note: 0,             weight: 25 },
   VISUAL_WITH_CAPTION:       { loud: 0, visual: 1, note: 1,             weight: 35 },

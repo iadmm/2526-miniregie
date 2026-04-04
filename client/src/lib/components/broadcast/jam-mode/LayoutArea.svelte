@@ -57,7 +57,7 @@
 		</div>
 	{/if}
 
-	{#if jamLayout === 'IDLE' || (!jamSlots.loud && !visualItem && !jamSlots.note)}
+	{#if jamLayout === 'IDLE' || jamLayout === 'QR_CARD' || (!jamSlots.loud && !visualItem && !jamSlots.note)}
 		<PoolEmpty />
 	{/if}
 </div>

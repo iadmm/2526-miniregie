@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { apiFetch } from '$lib/api';
+	import { apiFetch, reloadConfig } from '$lib/api';
 	import { serverState } from '$lib/server-state.svelte';
 	import { KNOWN_APPS } from '@shared/types';
 
@@ -27,6 +27,14 @@
 
 	async function resumeTo(appId: string) {
 		await del('/api/jam/panic', { resumeAppId: appId });
+	}
+
+	async function triggerReloadConfig() {
+		busy = true;
+		error = null;
+		const result = await reloadConfig();
+		error = result.error;
+		busy = false;
 	}
 </script>
 
@@ -61,9 +69,25 @@
 		<button
 			class="c-btn"
 			disabled={busy}
+			onclick={() => confirm('Delete all pool items?') && post('/api/pool/reset')}
+		>
+			Reset pool
+		</button>
+
+		<button
+			class="c-btn"
+			disabled={busy}
 			onclick={() => confirm('Reload all broadcast clients?') && post('/api/broadcast/reload')}
 		>
 			Reload clients
+		</button>
+
+		<button
+			class="c-btn"
+			disabled={busy}
+			onclick={triggerReloadConfig}
+		>
+			Reload config
 		</button>
 
 		{#if !broadcast?.panicState}

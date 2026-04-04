@@ -217,6 +217,11 @@ export function deleteItem(id: string): void {
   db.delete(mediaItems).where(eq(mediaItems.id, id)).run();
 }
 
+export function resetPool(): void {
+  db.delete(mediaEvents).run();
+  db.delete(mediaItems).run();
+}
+
 export function getLastSubmissionAt(participantId: string): number | null {
   const row = db.select({ value: max(mediaItems.submittedAt) })
     .from(mediaItems)

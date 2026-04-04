@@ -238,7 +238,9 @@ export type LayoutName =
   | 'VERTICAL_MEDIA_WITH_NOTE'// vertical clip/video + note alongside
   // ── Wide / panoramic visual (AR > 1.8) ────────────────────────────────────
   | 'WIDE_VISUAL'             // ultra-wide visual full width
-  | 'WIDE_VISUAL_WITH_NOTE';  // ultra-wide visual + note below
+  | 'WIDE_VISUAL_WITH_NOTE'   // ultra-wide visual + note below
+  // ── Special ───────────────────────────────────────────────────────────────
+  | 'QR_CARD';                // periodic QR reminder (timer-forced, never auto-selected)
 
 export interface LoudSlot {
   kind: 'loud';
@@ -280,6 +282,8 @@ export interface JamConfig {
     noteDurationMs:      number; // ms — display duration for note slots
     liveStreamMaxMs:     number; // ms — fallback duration for YouTube live streams (duration = 0)
     enrichCheckMs:       number; // ms — when loud plays alone, poll for companions at this interval
+    qrIntervalMs:        number; // ms — interval between QR_CARD displays
+    qrHoldMs:            number; // ms — how long QR_CARD stays visible
   };
   client: {
     watchdogTimeoutMs: number; // ms — without server ping before broadcast client reloads

@@ -39,8 +39,9 @@ export interface SlotChyronState {
 async function syncActiveAppState(): Promise<void> {
 	const res = await fetch('/api/active-app/state');
 	if (res.status === 204) return;
-	const data = await res.json() as { layout?: LayoutName; slots?: JamSlots; timing?: JamSlotTimings; lowerThird?: LowerThirdState | null; slotChyron?: SlotChyronState | null; enrichCheckAt?: EnrichState | null };
-	if (data.layout        !== undefined) serverState.jamLayout    = data.layout;
+	const data = await res.json() as { layout?: LayoutName; slots?: JamSlots; timing?: JamSlotTimings; lowerThird?: LowerThirdState | null; slotChyron?: SlotChyronState | null; enrichCheckAt?: EnrichState | null; qrVisible?: boolean };
+	if (data.qrVisible === true)           serverState.jamLayout    = 'QR_CARD';
+	else if (data.layout   !== undefined)  serverState.jamLayout    = data.layout;
 	if (data.slots         !== undefined) serverState.jamSlots     = data.slots;
 	if (data.timing        !== undefined) jamModeState.slotTimings = data.timing;
 	if (data.lowerThird    !== undefined) serverState.lowerThird   = data.lowerThird ?? null;

@@ -51,3 +51,6 @@ export const deleteScheduleEntry = (id: number) =>
 
 export const dispatchBroadcast = (appId: AppId) =>
 	apiFetch('POST', '/api/broadcast/dispatch', { appId });
+
+export const reloadConfig = () =>
+	apiFetch('POST', '/api/config/reload');
