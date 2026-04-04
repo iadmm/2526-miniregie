@@ -120,6 +120,7 @@ export const KNOWN_APPS = [
   'countdown-to-jam',
   'start-jam',
   'jam-mode',
+  'countdown-to-end',
   'micro-trottoir',
   'end-of-countdown',
   'post-jam-idle',

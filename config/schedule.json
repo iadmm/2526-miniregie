@@ -10,23 +10,13 @@
     "app": "jam-mode"
   },
   {
-    "_note": "micro-trottoir session at H+30h",
-    "at": "H+30:00:00",
-    "app": "micro-trottoir"
-  },
-  {
-    "_note": "micro-trottoir session 4h before end",
-    "at": "T-04:00:00",
-    "app": "micro-trottoir"
-  },
-  {
-    "_note": "return to jam-mode 1h before end",
-    "at": "T-01:00:00",
-    "app": "jam-mode"
+    "_note": "countdown to end 2h before end",
+    "at": "T-00:03:00",
+    "app": "countdown-to-end"
   },
   {
     "_note": "JAM end — UPDATE THIS to the actual end time before the event. This drives all T- triggers.",
-    "at": "H+48:00:00",
+    "at": "2026-04-05T16:30:00",
     "app": "end-of-countdown"
   }
 ]

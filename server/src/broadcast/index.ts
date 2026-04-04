@@ -108,6 +108,7 @@ export class BroadcastManager {
    */
   reloadSchedule(): void {
     this.schedule.reload();
+    this.emitState();
   }
 
   startJam(): void {

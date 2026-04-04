@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { apiFetch, reloadConfig } from '$lib/api';
+	import { apiFetch, reloadConfig, reseedSchedule } from '$lib/api';
 	import { serverState } from '$lib/server-state.svelte';
 	import { KNOWN_APPS } from '@shared/types';
 
@@ -33,6 +33,14 @@
 		busy = true;
 		error = null;
 		const result = await reloadConfig();
+		error = result.error;
+		busy = false;
+	}
+
+	async function triggerReseedSchedule() {
+		busy = true;
+		error = null;
+		const result = await reseedSchedule();
 		error = result.error;
 		busy = false;
 	}
@@ -88,6 +96,14 @@
 			onclick={triggerReloadConfig}
 		>
 			Reload config
+		</button>
+
+		<button
+			class="c-btn"
+			disabled={busy}
+			onclick={() => confirm('Clear all schedule entries and reseed from schedule.json?') && triggerReseedSchedule()}
+		>
+			Reseed schedule
 		</button>
 
 		{#if !broadcast?.panicState}

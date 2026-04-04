@@ -5,7 +5,9 @@ import {
   insertScheduleEntry,
   updateScheduleEntry,
   deleteScheduleEntry,
+  clearScheduleEntries,
 } from '../db/queries.js';
+import { seedSchedule } from '../db/index.js';
 import type { BroadcastManager } from '../broadcast/index.js';
 import type { ScheduleEntryStatus } from '../../../shared/types.js';
 
@@ -141,6 +143,17 @@ export default function createScheduleRouter(broadcast: BroadcastManager): Route
    * Useful after external DB changes or for admin debugging.
    */
   router.post('/reload', (_req, res) => {
+    broadcast.reloadSchedule();
+    res.json({ ok: true });
+  });
+
+  /**
+   * POST /api/schedule/reseed
+   * Clears all schedule entries and re-seeds from config/schedule.json.
+   */
+  router.post('/reseed', (_req, res) => {
+    clearScheduleEntries();
+    seedSchedule();
     broadcast.reloadSchedule();
     res.json({ ok: true });
   });

@@ -417,3 +417,7 @@ export function resetScheduleStatus(): void {
     .set({ status: 'pending', firedAt: null, modifiedAt: Date.now() })
     .run();
 }
+
+export function clearScheduleEntries(): void {
+  db.delete(scheduleEntries).run();
+}

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { serverState } from '$lib/server-state.svelte';
 
+	let {title} = $props();
+
 	let now = $state(Date.now());
 
 	const nextTriggerAt = $derived(serverState.state?.broadcast.nextTriggerAt ?? null);
@@ -25,7 +27,7 @@
 </script>
 
 <div class="app-countdown-to-jam">
-	<span class="app-countdown-to-jam__label">JAM starts in</span>
+	<span class="app-countdown-to-jam__label">{title}</span>
 	<span class="app-countdown-to-jam__time">
 		{msRemaining !== null ? formatCountdown(msRemaining) : '--:--'}
 	</span>

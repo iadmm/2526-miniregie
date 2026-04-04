@@ -47,6 +47,9 @@ export const updateScheduleEntry = (
 export const deleteScheduleEntry = (id: number) =>
 	apiFetch('DELETE', `/api/schedule/${id}`);
 
+export const reseedSchedule = () =>
+	apiFetch('POST', '/api/schedule/reseed');
+
 // ─── Broadcast ────────────────────────────────────────────────────────────────
 
 export const dispatchBroadcast = (appId: AppId) =>

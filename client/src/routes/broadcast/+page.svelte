@@ -31,7 +31,11 @@
 	</div>
 {:else if activeApp === 'countdown-to-jam'}
 	<div class="app-layer" in:iris={{ duration: 500, easing: expoOut }} out:iris={{ duration: 200, easing: cubicIn }}>
-		<CountdownToJam />
+		<CountdownToJam title="JAM starts in"/>
+	</div>
+{:else if activeApp === 'countdown-to-end'}
+	<div class="app-layer" in:iris={{ duration: 500, easing: expoOut }} out:iris={{ duration: 200, easing: cubicIn }}>
+		<CountdownToJam title="JAM ends in"/>
 	</div>
 {:else if activeApp === 'start-jam'}
 	<div class="app-layer" in:iris={{ duration: 500, easing: expoOut }} out:iris={{ duration: 200, easing: cubicIn }}>
