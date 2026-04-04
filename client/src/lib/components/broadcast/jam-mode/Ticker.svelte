@@ -1,55 +1,41 @@
 <script lang="ts">
-	import { serverState, emitTickerPass } from '$lib/server-state.svelte';
-	import type { MediaItem, TickerContent } from '@shared/types';
-
-	function tickerText(item: MediaItem): string {
-		return (item.content as TickerContent).text;
-	}
-
-	// ── Data ─────────────────────────────────────────────────────
-
-	const DEV_AUTHOR: MediaItem['author'] = { participantId: 'system:dev', displayName: 'System', team: '', role: '' };
-	const DEV_TICKER_ITEMS: MediaItem[] = import.meta.env.DEV ? [
-		{ id: 'dev-1', type: 'ticker', content: { text: "Bienvenue au JAM Multimédia — 48h de création collective à l'IAD" }, queuePosition: 0, status: 'ready', submittedAt: Date.now(), author: DEV_AUTHOR },
-		{ id: 'dev-2', type: 'ticker', content: { text: "Soumettez vos photos, vidéos et messages via l'interface /go" }, queuePosition: 1, status: 'ready', submittedAt: Date.now(), author: DEV_AUTHOR },
-		{ id: 'dev-3', type: 'ticker', content: { text: 'M4TV — la chaîne du campus, en direct depuis le studio' }, queuePosition: 2, status: 'ready', submittedAt: Date.now(), author: DEV_AUTHOR },
-	] : [];
-
-	const tickerItems = $derived(serverState.state?.pool.queueSnapshot.filter(i => i.type === 'ticker'));
-
-	const visible = $derived(tickerItems.length > 0);
+	import { serverState } from '$lib/server-state.svelte';
 
 	// ── Scroll ───────────────────────────────────────────────────
 
 	let track: HTMLDivElement | undefined;
 
-	function onTickerPass(): void {
-		const ids = tickerItems.map(i => i.id);
-		if (ids.length > 0) emitTickerPass(ids);
+	const queue   = $derived(serverState.tickerQueue);
+	const visible = $derived(queue.length > 0);
+
+	function onAnimationIteration(): void {
+		for (const entry of serverState.tickerQueue) {
+			entry.passesLeft--;
+		}
+		serverState.tickerQueue = serverState.tickerQueue.filter(e => e.passesLeft > 0);
 	}
 
 	$effect(() => {
-		// Depend on items so the effect re-runs when content changes
-		if (!track || tickerItems.length === 0) return;
+		// Depend on queue so the effect re-runs when content changes
+		if (!track || queue.length === 0) return;
 		const rAF = requestAnimationFrame(() => {
 			if (!track) return;
 			// Track contains items duplicated — half is the real content width
 			const duration = (track.scrollWidth / 2) / 55;
 			track.style.setProperty('animation-duration', `${duration}s`);
 		});
-		// animationiteration fires each time the scroll loop completes one full pass
-		track.addEventListener('animationiteration', onTickerPass);
+		track.addEventListener('animationiteration', onAnimationIteration);
 		return () => {
 			cancelAnimationFrame(rAF);
-			track?.removeEventListener('animationiteration', onTickerPass);
+			track?.removeEventListener('animationiteration', onAnimationIteration);
 		};
 	});
 </script>
 
 <div class="c-ticker" class:visible={visible} aria-live="off" aria-atomic="false">
 	<div class="c-ticker-track" bind:this={track}>
-		{#each [...tickerItems, ...tickerItems] as item, i (i)}
-			<span class="c-ticker-track__item">{tickerText(item)}</span>
+		{#each [...queue, ...queue] as entry, i (`${entry.id}-${i}`)}
+			<span class="c-ticker-track__item">{entry.text}</span>
 			<span class="c-ticker-track__sep" aria-hidden="true">·</span>
 		{/each}
 	</div>

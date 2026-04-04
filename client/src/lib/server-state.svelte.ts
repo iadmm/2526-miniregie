@@ -1,5 +1,5 @@
 import { io, type Socket } from 'socket.io-client';
-import type { GlobalState, LayoutName, MediaItem } from '@shared/types';
+import type { GlobalState, LayoutName, MediaItem, TickerContent } from '@shared/types';
 import { jamModeState, type JamSlotTimings, type EnrichState } from './jam-mode-state.svelte';
 import { logEvent } from './broadcast-log.svelte';
 import { fetchPoolItems } from './pool-items.svelte';
@@ -16,6 +16,12 @@ import {
 
 const COMPANION_LAYOUTS = new Set<LayoutName>(['MEDIA_WITH_VISUAL']);
 const DUAL_LAYOUTS      = new Set<LayoutName>(['DUAL_VISUAL', 'PORTRAIT_DUO']);
+
+export interface TickerEntry {
+	id:         string;
+	text:       string;
+	passesLeft: number;
+}
 
 export interface LowerThirdState {
 	label: string;
@@ -64,21 +70,23 @@ export interface JamSlots {
 }
 
 interface ServerState {
-	connected:  boolean;
-	state:      GlobalState | null;
-	jamLayout:  LayoutName | null;
-	jamSlots:   JamSlots;
-	lowerThird: LowerThirdState | null;
-	slotChyron: SlotChyronState | null;
+	connected:   boolean;
+	state:       GlobalState | null;
+	jamLayout:   LayoutName | null;
+	jamSlots:    JamSlots;
+	lowerThird:  LowerThirdState | null;
+	slotChyron:  SlotChyronState | null;
+	tickerQueue: TickerEntry[];
 }
 
 export const serverState = $state<ServerState>({
-	connected:  false,
-	state:      null,
-	jamLayout:  null,
-	jamSlots:   {},
-	lowerThird: null,
-	slotChyron: null,
+	connected:   false,
+	state:       null,
+	jamLayout:   null,
+	jamSlots:    {},
+	lowerThird:  null,
+	slotChyron:  null,
+	tickerQueue: [],
 });
 
 let socket: Socket | null = null;
@@ -162,6 +170,13 @@ export function connectSocket(): void {
 		void fetchPoolItems();
 	});
 
+	socket.on('jam-mode:ticker:add', (item: MediaItem) => {
+		if (serverState.tickerQueue.some(e => e.id === item.id)) return;
+		const text = (item.content as TickerContent).text;
+		serverState.tickerQueue.push({ id: item.id, text, passesLeft: 3 });
+		logEvent('jam-mode:ticker:add', item);
+	});
+
 	socket.on('broadcast:reload', () => {
 		location.reload();
 	});
@@ -177,6 +192,3 @@ export function getSocket(): Socket | null {
 	return socket;
 }
 
-export function emitTickerPass(itemIds: string[]): void {
-	socket?.emit('ticker:pass', itemIds);
-}
