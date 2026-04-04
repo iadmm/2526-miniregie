@@ -46,20 +46,23 @@
         display: grid;
         grid-template-rows: auto auto;
 
+        grid-template-areas: 'content' 'branding';
+
         gap: var(--gap-unit);
         overflow: hidden;
     }
 
     .c-broadcast-chrome__content {
-        grid-row-start: 1;
-        grid-row-end: 2;
+        grid-area: content;
     }
 
     .c-branding__branding {
+        grid-area: branding;
         grid-row-start: 2;
         grid-row-end: 3;
         flex-shrink: 0;
-        display: flex;
+        display: grid;
+        grid-template-columns: auto auto 1fr;
         height: calc(3 * var(--grid-unit));
         animation: bcast-bar-enter 640ms cubic-bezier(0.16, 1, 0.3, 1) both;
         animation-delay: 120ms;

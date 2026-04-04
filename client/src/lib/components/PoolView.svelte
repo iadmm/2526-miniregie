@@ -1,13 +1,19 @@
 <script lang="ts">
 	import type { MediaItem } from '@shared/types';
 	import { serverState } from '$lib/server-state.svelte';
-	import { contentPreview, formatSubmittedAt, formatAR } from '$lib/pool-items.svelte';
+	import { poolItems, fetchPoolItems, contentPreview, formatSubmittedAt, formatAR } from '$lib/pool-items.svelte';
 	import { apiFetch } from '$lib/api';
-	import { invalidateAll } from '$app/navigation';
 
-	interface Props { poolItems?: MediaItem[] }
-	let { poolItems = [] }: Props = $props();
+	interface Props { initialItems?: MediaItem[] }
+	let { initialItems = [] }: Props = $props();
 
+	$effect(() => {
+		if (poolItems.items.length === 0 && initialItems.length > 0) {
+			poolItems.items = initialItems;
+		}
+	});
+
+	const items = $derived(poolItems.items as MediaItem[]);
 	const activeItemIds = $derived(serverState.state?.broadcast?.activeItemIds ?? []);
 
 	let flashMessage = $state<string | null>(null);
@@ -17,7 +23,7 @@
 		const { ok } = await apiFetch('DELETE', `/api/items/${item.id}`);
 		if (!ok) return;
 
-		await invalidateAll();
+		await fetchPoolItems();
 
 		flashMessage = `"${item.author.displayName}" item deleted`;
 		if (flashTimer) clearTimeout(flashTimer);
@@ -27,14 +33,14 @@
 
 <section class="c-admin__section">
 	<p class="c-admin__label">
-		Pool — {poolItems.length} items
+		Pool — {items.length} items
 	</p>
 
 	{#if flashMessage}
 		<p class="c-message c-message--success">{flashMessage}</p>
 	{/if}
 
-	{#if poolItems.length === 0}
+	{#if items.length === 0}
 		<p class="c-pool__empty">Pool is empty</p>
 	{:else}
 		<table class="c-pool__table">
@@ -50,7 +56,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each poolItems as item (item.id)}
+				{#each items as item (item.id)}
 					<tr
 						class="c-pool__row"
 						data-status={item.status}

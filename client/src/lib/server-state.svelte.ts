@@ -2,6 +2,7 @@ import { io, type Socket } from 'socket.io-client';
 import type { GlobalState, LayoutName, MediaItem } from '@shared/types';
 import { jamModeState, type JamSlotTimings, type EnrichState } from './jam-mode-state.svelte';
 import { logEvent } from './broadcast-log.svelte';
+import { fetchPoolItems } from './pool-items.svelte';
 import {
   startCompanionIntro,
   resumeCompanionActive,
@@ -155,6 +156,10 @@ export function connectSocket(): void {
 	socket.on('jam-mode:slot-chyron:hide', () => {
 		serverState.slotChyron = null;
 		logEvent('jam-mode:slot-chyron:hide');
+	});
+
+	socket.on('pool:item:ready', () => {
+		void fetchPoolItems();
 	});
 
 	socket.on('broadcast:reload', () => {

@@ -1,4 +1,5 @@
 import type { MediaItem } from '@shared/types';
+import { apiFetch } from './api';
 
 const STATUS_RANK: Record<MediaItem['status'], number> = {
 	ready:   0,
@@ -22,23 +23,18 @@ export const poolItems = $state<PoolItemsState>({
 export async function fetchPoolItems(): Promise<void> {
 	poolItems.loading = true;
 	poolItems.error = null;
-	try {
-		const res = await fetch('/api/items');
-		if (!res.ok) throw new Error(`HTTP ${res.status}`);
-		const raw = (await res.json()) as MediaItem[];
-		poolItems.items = raw.sort((a, b) => {
+	const { ok, data, error } = await apiFetch<MediaItem[]>('GET', '/api/items');
+	if (ok && data) {
+		poolItems.items = data.sort((a, b) => {
 			const byStatus = STATUS_RANK[a.status] - STATUS_RANK[b.status];
 			if (byStatus !== 0) return byStatus;
-			// Within ready: queue position ASC
 			if (a.status === 'ready') return (a.queuePosition ?? 999) - (b.queuePosition ?? 999);
-			// Others: most recent first
 			return b.submittedAt - a.submittedAt;
 		});
-	} catch (e) {
-		poolItems.error = String(e);
-	} finally {
-		poolItems.loading = false;
+	} else {
+		poolItems.error = error;
 	}
+	poolItems.loading = false;
 }
 
 export function formatAR(item: MediaItem): string {

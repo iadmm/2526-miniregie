@@ -1,11 +1,10 @@
-import { COOKIE_NAME } from '@shared/session';
-import type { Handle } from '@sveltejs/kit';
-import type { Participant } from '@shared/types';
+import {COOKIE_NAME} from '@shared/session';
+import type {Handle} from '@sveltejs/kit';
+import type {Participant} from '@shared/types';
 
 const API_BASE = process.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
 
 export const handle: Handle = async ({ event, resolve }) => {
-	console.log('SvelteKit request:', event.url.pathname);
 	event.locals.participant = null;
 
 	const token = event.cookies.get(COOKIE_NAME);
@@ -23,7 +22,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	const response =  await resolve(event);
-	console.log('SvelteKit response done');
-	return response;
+	return resolve(event);
 };

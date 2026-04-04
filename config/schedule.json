@@ -2,12 +2,12 @@
   {
     "_note": "JAM_START is a manual admin action — not in schedule. Edit this entry to match your desired countdown duration.",
     "at": "H+00:00:10",
-    "app": "jam-mode"
+    "app": "start-jam"
   },
   {
-    "_note": "micro-trottoir session at H+12h",
-    "at": "H+12:00:00",
-    "app": "micro-trottoir"
+    "_note": "JAM_START is a manual admin action — not in schedule. Edit this entry to match your desired countdown duration.",
+    "at": "H+00:00:20",
+    "app": "jam-mode"
   },
   {
     "_note": "micro-trottoir session at H+30h",

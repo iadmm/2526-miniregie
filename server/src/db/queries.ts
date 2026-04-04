@@ -213,6 +213,7 @@ export function getAllItems(filters: AllItemsFilters = {}): MediaItem[] {
 }
 
 export function deleteItem(id: string): void {
+  db.delete(mediaEvents).where(eq(mediaEvents.itemId, id)).run();
   db.delete(mediaItems).where(eq(mediaItems.id, id)).run();
 }
 

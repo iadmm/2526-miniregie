@@ -1,6 +1,12 @@
 <script lang="ts">
-	import { apiFetch } from '$lib/api';
-	import type { ScheduleEntry } from '@shared/types';
+	import {
+		getSchedule,
+		createScheduleEntry,
+		updateScheduleEntry,
+		deleteScheduleEntry,
+		dispatchBroadcast,
+	} from '$lib/api';
+	import type { ScheduleEntry, AppId } from '@shared/types';
 	import { buildAt, type AtType } from '$lib/schedule-utils';
 	import { serverState } from '$lib/server-state.svelte';
 	import ScheduleRow from './ScheduleRow.svelte';
@@ -16,59 +22,52 @@
 
 	let addAtType = $state<AtType>('H+');
 	let addAtValue = $state('');
-	let addApp = $state('jam-mode');
+	let addApp = $state<AppId>('jam-mode');
 	let addLabel = $state('');
 
 	const jam = $derived(serverState.state?.jam ?? null);
 
 	async function fetchEntries() {
-		try {
-			const res = await fetch('/api/schedule');
-			if (res.ok) {
-				entries = (await res.json()) as ScheduleEntry[];
-			} else {
-				error = ((await res.json()) as { error?: string }).error ?? `HTTP ${res.status}`;
-			}
-		} catch (e) {
-			error = String(e);
-		}
+		const result = await getSchedule();
+		if (result.ok) entries = result.data!;
+		else error = result.error;
 	}
 
-	async function api(method: string, path: string, body?: unknown): Promise<boolean> {
+	async function call(fn: () => Promise<{ ok: boolean; error: string | null }>): Promise<boolean> {
 		busy = true;
 		error = null;
-		const result = await apiFetch(method, path, body);
+		const result = await fn();
 		error = result.error;
 		busy = false;
 		return result.ok;
 	}
 
-	async function handleSave(id: number, patch: { at: string; app: string; label: string | null }): Promise<boolean> {
-		const ok = await api('PUT', `/api/schedule/${id}`, patch);
+	async function handleSave(id: number, patch: { at: string; app: AppId; label: string | null }): Promise<boolean> {
+		const ok = await call(() => updateScheduleEntry(id, patch));
 		if (ok) await fetchEntries();
 		return ok;
 	}
 
 	async function handleFire(entry: ScheduleEntry) {
-		const ok = await api('POST', '/api/broadcast/dispatch', { appId: entry.app });
+		const ok = await call(() => dispatchBroadcast(entry.app));
 		if (ok) {
-			await api('PUT', `/api/schedule/${entry.id}`, { status: 'fired' });
+			await call(() => updateScheduleEntry(entry.id, { status: 'fired' }));
 			await fetchEntries();
 		}
 	}
 
 	async function handleDelete(id: number) {
 		if (!confirm('Delete this schedule entry?')) return;
-		const ok = await api('DELETE', `/api/schedule/${id}`);
+		const ok = await call(() => deleteScheduleEntry(id));
 		if (ok) await fetchEntries();
 	}
 
 	async function handleAdd() {
-		const ok = await api('POST', '/api/schedule', {
+		const ok = await call(() => createScheduleEntry({
 			at: buildAt(addAtType, addAtValue),
 			app: addApp,
 			label: addLabel || undefined,
-		});
+		}));
 		if (ok) {
 			await fetchEntries();
 			addAtValue = '';

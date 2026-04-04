@@ -28,7 +28,7 @@
 
 	</div>
 	<ScheduleControl initialEntries={data.scheduleEntries} />
-	<PoolView poolItems={data.poolItems} />
+	<PoolView initialItems={data.poolItems} />
 </main>
 
 <style>

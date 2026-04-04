@@ -13,7 +13,6 @@ import { SlotTimer, type SlotName, type SlotTimerMeta } from "./slot-timer.js";
 import { LowerThirdOrchestrator, type LowerThirdPayload } from "./lower-third.js";
 import { SlotChyronOrchestrator, type SlotChyronPayload } from "./slot-chyron.js";
 import { EnrichmentPoller } from "./enrich-poller.js";
-import { TickerTracker } from "./ticker-tracker.js";
 
 // ─── JamModeQueues ────────────────────────────────────────────────────────────
 
@@ -37,17 +36,9 @@ export class JamModeApp extends BaseApp {
   private readonly lowerThird:       LowerThirdOrchestrator;
   private readonly slotChyron:       SlotChyronOrchestrator;
   private readonly enrichPoller:     EnrichmentPoller;
-  private readonly tickerTracker:    TickerTracker;
   private readonly enrichIntervalMs: number;
 
   // Bound socket handlers — stored for clean removal in stop()
-  private readonly _onTickerPass = (itemIds: string[]): void => {
-    this.tickerTracker.recordPass(itemIds, (id) => this.pool.markDisplayed(id, this.id));
-  };
-
-  private readonly _onConnection = (socket: Socket): void => {
-    socket.on('ticker:pass', this._onTickerPass);
-  };
 
   queues: JamModeQueues = { loud: [], visual: [], note: [], ticker: [] };
   layout: LayoutName    = 'IDLE';
@@ -61,7 +52,6 @@ export class JamModeApp extends BaseApp {
     this.slotTimer      = new SlotTimer(cfg, (slot) => this.onSlotExpired(slot));
     this.lowerThird     = new LowerThirdOrchestrator((event, payload) => this.io.emit(event, payload));
     this.slotChyron     = new SlotChyronOrchestrator((event, payload) => this.io.emit(event, payload));
-    this.tickerTracker  = new TickerTracker();
     this.enrichPoller = new EnrichmentPoller(
       cfg.enrichCheckMs,
       () => {
@@ -86,24 +76,14 @@ export class JamModeApp extends BaseApp {
   }
 
   play(): void {
-    // Attach ticker:pass listener to all connected sockets and new connections
-    for (const socket of this.io.sockets.sockets.values()) {
-      socket.on('ticker:pass', this._onTickerPass);
-    }
-    this.io.on('connection', this._onConnection);
     this.applyLayout();
   }
 
   async stop(): Promise<void> {
-    this.io.off('connection', this._onConnection);
-    for (const socket of this.io.sockets.sockets.values()) {
-      socket.off('ticker:pass', this._onTickerPass);
-    }
     this.slotTimer.clearAll();
     this.enrichPoller.cancel();
     this.lowerThird.clear();
     this.slotChyron.clear();
-    this.tickerTracker.clear();
   }
 
   remove(): void {

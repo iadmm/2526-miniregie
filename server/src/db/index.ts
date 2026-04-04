@@ -73,8 +73,7 @@ if (adminUsername && adminPassword) {
 
 // ─── Seed schedule from config/schedule.json if table is empty ────────────────
 
-const existingEntries = db.select().from(scheduleEntries).all();
-if (existingEntries.length === 0) {
+export function seedSchedule(){
   const SCHEDULE_FILE = process.env['SCHEDULE_FILE'] ?? 'config/schedule.json';
   try {
     const raw = JSON.parse(readFileSync(SCHEDULE_FILE, 'utf-8')) as Array<{ at: string; app?: string; trigger?: string; label?: string }>;
@@ -92,3 +91,9 @@ if (existingEntries.length === 0) {
     console.warn(`[db] Failed to seed schedule from ${SCHEDULE_FILE}:`, err);
   }
 }
+
+const existingEntries = db.select().from(scheduleEntries).all();
+if (existingEntries.length === 0) {
+  seedSchedule();
+}
+

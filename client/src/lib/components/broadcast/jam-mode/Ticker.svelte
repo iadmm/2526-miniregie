@@ -46,7 +46,7 @@
 	});
 </script>
 
-<div class="c-ticker" class:has-messages={visible} aria-live="off" aria-atomic="false">
+<div class="c-ticker" class:visible={visible} aria-live="off" aria-atomic="false">
 	<div class="c-ticker-track" bind:this={track}>
 		{#each [...tickerItems, ...tickerItems] as item, i (i)}
 			<span class="c-ticker-track__item">{tickerText(item)}</span>
@@ -64,6 +64,11 @@
 		align-items: center;
 		position: relative;
 		margin-right: var(--grid-unit);
+		transition: opacity .3s linear;
+		opacity: 0;
+	}
+	.c-ticker.visible {
+		opacity: 1;
 	}
 
 	.c-ticker::before {
